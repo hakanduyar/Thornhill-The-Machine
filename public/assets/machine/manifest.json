@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 2,
+  "world": "machine",
+  "cameraName": "route_camera",
+  "clipName": "machine_interactive",
+  "durationSeconds": 84.67811,
+  "timeBasis": "authored",
+  "source": null,
+  "framingAspectRatio": 1.77777779,
+  "focalScreenName": "focal_screen",
+  "backgroundColor": "#020306",
+  "anchors": [
+    {
+      "screen": "screen_01_hallway",
+      "anchorNode": "anchor_screen_01_hallway",
+      "holdStart": 6.103677,
+      "holdEnd": 8.903677
+    },
+    {
+      "screen": "screen_02_roadside_car",
+      "anchorNode": "anchor_screen_02_roadside_car",
+      "holdStart": 15.49426,
+      "holdEnd": 18.29426
+    },
+    {
+      "screen": "screen_03_lockers",
+      "anchorNode": "anchor_screen_03_lockers",
+      "holdStart": 24.9817715,
+      "holdEnd": 27.78177
+    },
+    {
+      "screen": "screen_04_armed_corridor",
+      "anchorNode": "anchor_screen_04_armed_corridor",
+      "holdStart": 34.4666672,
+      "holdEnd": 37.2666664
+    },
+    {
+      "screen": "screen_05_stairwell_person",
+      "anchorNode": "anchor_screen_05_stairwell_person",
+      "holdStart": 44.13692,
+      "holdEnd": 46.93692
+    },
+    {
+      "screen": "screen_06_clock_hallway",
+      "anchorNode": "anchor_screen_06_clock_hallway",
+      "holdStart": 53.59929,
+      "holdEnd": 56.39929
+    },
+    {
+      "screen": "screen_07_workroom",
+      "anchorNode": "anchor_screen_07_workroom",
+      "holdStart": 62.9965248,
+      "holdEnd": 65.796524
+    },
+    {
+      "screen": "screen_08_cafeteria",
+      "anchorNode": "anchor_screen_08_cafeteria",
+      "holdStart": 72.5781,
+      "holdEnd": 75.3781052
+    }
+  ],
+  "sceneUrl": "./scene.glb",
+  "referenceFrames": [
+    {
+      "timeSeconds": 7.503677,
+      "evidencePath": "hold-1"
+    },
+    {
+      "timeSeconds": 16.894260000000003,
+      "evidencePath": "hold-2"
+    },
+    {
+      "timeSeconds": 26.38177075,
+      "evidencePath": "hold-3"
+    },
+    {
+      "timeSeconds": 35.866666800000004,
+      "evidencePath": "hold-4"
+    },
+    {
+      "timeSeconds": 45.53692,
+      "evidencePath": "hold-5"
+    },
+    {
+      "timeSeconds": 54.99929,
+      "evidencePath": "hold-6"
+    },
+    {
+      "timeSeconds": 64.3965244,
+      "evidencePath": "hold-7"
+    },
+    {
+      "timeSeconds": 73.9781026,
+      "evidencePath": "hold-8"
+    }
+  ]
+}
