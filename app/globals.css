@@ -92,5 +92,10 @@ body {
 @keyframes sam-wait { 50% { opacity:.35; } }
 @media(prefers-reduced-motion:reduce) { .sam-symbol.waiting { animation:none; } }
 .machine-startup { background:#020306; color:#d5d7dc; }
-.machine-reset { border:1px solid #9b9da3; padding:16px 26px; font:13px/1.4 ui-monospace,monospace; letter-spacing:2px; }
-.machine-wait { width:5px; height:5px; background:#b5b7bd; }
+.machine-panel { min-width:240px; padding:14px 18px 16px; border:1px solid #c9ccd2; background:#000; font:12px/1.4 ui-monospace,monospace; letter-spacing:2px; text-transform:uppercase; }
+.machine-panel-title { color:#d5d7dc; }
+.machine-panel-rule { height:1px; margin:10px 0 12px; background:#c9ccd2; opacity:.45; }
+.machine-panel-row { display:flex; align-items:center; gap:10px; color:#d5d7dc; }
+.machine-panel-mark { width:6px; height:6px; background:#c9b458; animation:machine-activity 1.4s ease-in-out infinite; }
+@keyframes machine-activity { 50% { opacity:.3; } }
+@media(prefers-reduced-motion:reduce) { .machine-panel-mark { animation:none; } .machine-panel-row::after { content:"..."; } }
