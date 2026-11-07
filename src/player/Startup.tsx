@@ -14,7 +14,7 @@ export function Startup({ ready, onComplete }: { ready: boolean; onComplete(): v
     completed.current = true;
     onComplete();
   }, [ready, onComplete]);
-  if (ready) return null;
+  if (ready || completed.current) return null;
   return <div className="sam-startup machine-startup" role="status" aria-live="polite" aria-label="Preparing scene">
     <div className="machine-panel">
       <div className="machine-panel-title">SYSTEM</div>
