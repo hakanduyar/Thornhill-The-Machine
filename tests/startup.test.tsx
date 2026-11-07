@@ -31,7 +31,9 @@ it('is removed immediately on real readiness with no artificial delay (fast read
 });
 
 it('never reappears or completes twice after readiness', async () => {
-  await show(true); await show(true); await show(false); await show(true);
+  await show(true); await show(true); await show(false);
+  expect(host.textContent).toBe('');
+  await show(true);
   expect(host.textContent).toBe(''); expect(completeSpy).toHaveBeenCalledTimes(1);
 });
 
