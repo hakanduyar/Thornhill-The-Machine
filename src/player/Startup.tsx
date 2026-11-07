@@ -1,31 +1,25 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
-/** A timed title sequence, not a network progress indicator. */
+/**
+ * Readiness panel driven only by the player's real status: it is shown while
+ * the scene loads and prepares, and is removed as soon as the runtime reports
+ * ready (first frame rendered and presented). No timer, percentage or
+ * scripted sequence is involved; errors are rendered by the player itself.
+ */
 export function Startup({ ready, onComplete }: { ready: boolean; onComplete(): void }) {
-  const [done, setDone] = useState(false);
+  const completed = useRef(false);
   useEffect(() => {
-    if (!ready) return;
-    let elapsed = 0;
-    let previous: number | null = null;
-    let raf = 0;
-    let cancelled = false;
-    const visibility = () => { previous = null; };
-    const tick = (now: number) => {
-      if (cancelled) return;
-      if (!document.hidden) {
-        if (previous !== null) elapsed += Math.min(now - previous, 100);
-        previous = now;
-        if (elapsed >= 2000) { setDone(true); onComplete(); return; }
-      } else previous = null;
-      raf = requestAnimationFrame(tick);
-    };
-    document.addEventListener("visibilitychange", visibility);
-    raf = requestAnimationFrame(tick);
-    return () => { cancelled = true; cancelAnimationFrame(raf); document.removeEventListener("visibilitychange", visibility); };
+    if (!ready || completed.current) return;
+    completed.current = true;
+    onComplete();
   }, [ready, onComplete]);
-  if (done) return null;
-  return <div className="sam-startup machine-startup" role="status" aria-label={ready ? "Resetting to real time" : "Loading"}>
-    {ready ? <div className="machine-reset">RESETTING TO REAL TIME</div> : <div className="machine-wait" />}
+  if (ready) return null;
+  return <div className="sam-startup machine-startup" role="status" aria-live="polite" aria-label="Preparing scene">
+    <div className="machine-panel">
+      <div className="machine-panel-title">SYSTEM</div>
+      <div className="machine-panel-rule" />
+      <div className="machine-panel-row"><span className="machine-panel-mark" aria-hidden="true" />PREPARING SCENE</div>
+    </div>
   </div>;
 }
