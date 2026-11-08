@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { World } from "../contract/manifest";
 import { QaPanel } from "./QaPanel";
 import { Startup } from "./Startup";
-import { createPlayer, type PlayerController, type PlayerStatus } from "./runtime";
+import { createPlayer, type PlayerController, type PlayerHandle, type PlayerStatus } from "./runtime";
 import { parsePlayerParams, type QueryRecord } from "./time";
 
 const WORLD_LABEL: Record<World, string> = { samaritan: "Samaritan", machine: "Machine" };
@@ -36,7 +36,12 @@ export function ScenePlayer({ world, query }: ScenePlayerProps) {
     const frame = frameRef.current;
     const marker = markerRef.current;
     if (!host || !frame || !marker) return;
-    const handle = createPlayer({ world, params, host, frame, marker, onStatus: setStatus,
+    const handle: PlayerHandle = createPlayer({ world, params, host, frame, marker, onStatus: (next) => {
+      // Real readiness already means the first frame was drawn. Unlock input
+      // in this same callback, before React's later overlay-dismissal effect.
+      if (next.state === "ready") handle.controller.setInteractionReady();
+      setStatus(next);
+    },
       interactionReady: !(world === "machine" && params.mode === "interactive") });
     setController(handle.controller);
     return () => {
