@@ -29,6 +29,7 @@ export function ScenePlayer({ world, query }: ScenePlayerProps) {
   const markerRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<PlayerStatus>({ state: "loading" });
   const [controller, setController] = useState<PlayerController | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -42,7 +43,7 @@ export function ScenePlayer({ world, query }: ScenePlayerProps) {
       handle.dispose();
       setController(null);
     };
-  }, [world, params]);
+  }, [world, params, attempt]);
 
   const label = WORLD_LABEL[world];
   const startup = world === "machine" && params.mode === "interactive";
@@ -61,7 +62,7 @@ export function ScenePlayer({ world, query }: ScenePlayerProps) {
         data-time=""
       />
       <div className="ref-frame" ref={frameRef} />
-      {startup && (status.state === "loading" || status.state === "ready") ? <Startup key={paramsKey} ready={status.state === "ready"} onComplete={completeStartup} /> : null}
+      {startup && (status.state === "loading" || status.state === "ready") ? <Startup key={`${paramsKey}:${attempt}`} ready={status.state === "ready"} onComplete={completeStartup} detail={status.state === "loading" ? status.detail : undefined} loadedBytes={status.state === "loading" ? status.loadedBytes : undefined} /> : null}
       {status.state !== "ready" && !(startup && status.state === "loading") ? (
         <div className="ref-status" role="status" aria-live="polite">
           {status.state === "loading" ? (
@@ -72,6 +73,7 @@ export function ScenePlayer({ world, query }: ScenePlayerProps) {
                 {label}: {status.message}
               </p>
               <p className="ref-status-detail">{status.detail}</p>
+              <button type="button" onClick={() => setAttempt((value) => value + 1)}>Retry loading scene</button>
             </div>
           )}
         </div>

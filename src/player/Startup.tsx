@@ -7,7 +7,7 @@ import { useEffect, useRef } from "react";
  * ready (first frame rendered and presented). No timer, percentage or
  * scripted sequence is involved; errors are rendered by the player itself.
  */
-export function Startup({ ready, onComplete }: { ready: boolean; onComplete(): void }) {
+export function Startup({ ready, onComplete, detail = "PREPARING SCENE", loadedBytes }: { ready: boolean; onComplete(): void; detail?: string; loadedBytes?: number }) {
   const completed = useRef(false);
   useEffect(() => {
     if (!ready || completed.current) return;
@@ -19,7 +19,8 @@ export function Startup({ ready, onComplete }: { ready: boolean; onComplete(): v
     <div className="machine-panel">
       <div className="machine-panel-title">SYSTEM</div>
       <div className="machine-panel-rule" />
-      <div className="machine-panel-row"><span className="machine-panel-mark" aria-hidden="true" />PREPARING SCENE</div>
+      <div className="machine-panel-row"><span className="machine-panel-mark" aria-hidden="true" />{detail}</div>
+      {loadedBytes !== undefined && <div className="machine-panel-progress">{(loadedBytes / 1_000_000).toFixed(1)} MB received</div>}
     </div>
   </div>;
 }

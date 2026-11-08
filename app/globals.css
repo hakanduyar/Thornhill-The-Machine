@@ -97,5 +97,6 @@ body {
 .machine-panel-rule { height:1px; margin:10px 0 12px; background:#c9ccd2; opacity:.45; }
 .machine-panel-row { display:flex; align-items:center; gap:10px; color:#d5d7dc; }
 .machine-panel-mark { width:6px; height:6px; background:#c9b458; animation:machine-activity 1.4s ease-in-out infinite; }
+.machine-panel-progress { margin-top:8px; letter-spacing:1px; color:#aeb3bc; }
 @keyframes machine-activity { 50% { opacity:.3; } }
 @media(prefers-reduced-motion:reduce) { .machine-panel-mark { animation:none; } .machine-panel-row::after { content:"..."; } }
