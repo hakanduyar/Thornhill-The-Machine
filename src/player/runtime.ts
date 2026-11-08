@@ -26,6 +26,8 @@ export const MAX_PIXEL_RATIO = 1.5;
 const MAX_FRAME_DELTA_SECONDS = 0.1;
 const MANUAL_PIXELS_PER_ROUTE = 20000;
 const REFERENCE_PIXELS_PER_ROUTE = 24000;
+export const STARTUP_STALL_MS = 45_000;
+export const STARTUP_LIMIT_MS = 300_000;
 
 export interface RendererLike {
   domElement: HTMLCanvasElement;
@@ -38,7 +40,7 @@ export interface RendererLike {
 }
 
 export type PlayerStatus =
-  | { state: "loading" }
+  | { state: "loading"; detail?: string; loadedBytes?: number }
   | { state: "ready"; manifest: SceneManifest }
   | { state: "missing"; message: string; detail: string }
   | { state: "error"; message: string; detail: string };
@@ -104,6 +106,12 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
   const maxPixelRatio = options.maxPixelRatio ?? MAX_PIXEL_RATIO;
 
   const abort = new AbortController();
+  const manager = new LoadingManager();
+  let stallTimer: number | undefined;
+  let limitTimer: number | undefined;
+  const clearStartupTimers = () => {
+    win.clearTimeout(stallTimer); win.clearTimeout(limitTimer);
+  };
   const cleanups: Array<() => void> = [];
   const listeners = new Set<(snapshot: PlayerSnapshot) => void>();
   let disposed = false;
@@ -146,15 +154,26 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
   onStatus({ state: "loading" });
 
   const setStatus = (status: PlayerStatus) => {
-    if (disposed) return;
+    if (disposed || terminal) return;
     if (status.state === "missing" || status.state === "error") terminal = true;
     marker.dataset.state = status.state;
     onStatus(status);
   };
 
   const fail = (state: "missing" | "error", message: string, detail: string) => {
+    if (disposed || terminal) return;
+    clearStartupTimers();
+    abort.abort();
+    manager.abort();
     teardownScene();
     setStatus({ state, message, detail });
+  };
+  const startupExpired = () => fail("error", "Scene loading paused", "The scene did not finish loading. Check your connection and retry.");
+  const loadingProgress = (detail: string, loadedBytes?: number) => {
+    if (disposed || terminal || ready) return;
+    win.clearTimeout(stallTimer);
+    stallTimer = win.setTimeout(startupExpired, STARTUP_STALL_MS);
+    setStatus({ state: "loading", detail, loadedBytes });
   };
 
   const snapshot = (): PlayerSnapshot | null =>
@@ -413,6 +432,8 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
   }
 
   const start = async () => {
+    limitTimer = win.setTimeout(startupExpired, STARTUP_LIMIT_MS);
+    loadingProgress("CONNECTING TO SCENE");
     if (params.errors.length > 0) {
       fail("error", "Invalid player parameters", params.errors.join("; "));
       return;
@@ -426,7 +447,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
       if (!disposed) fail("error", "Manifest request failed", `${manifestUrl}: ${describe(error)}`);
       return;
     }
-    if (disposed) return;
+    if (disposed || terminal) return;
     if (response.status === 404) {
       fail(
         "missing",
@@ -447,7 +468,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
       if (!disposed) fail("error", "Manifest is not valid JSON", describe(error));
       return;
     }
-    if (disposed) return;
+    if (disposed || terminal) return;
 
     const validation = validateManifest(json, world);
     if (!validation.ok) {
@@ -475,13 +496,20 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     }
 
     const failedResources: string[] = [];
-    const manager = new LoadingManager();
     manager.onError = (url) => failedResources.push(url);
     let gltf: Awaited<ReturnType<GLTFLoader["loadAsync"]>>;
+    let receivedBytes = 0;
     try {
-      gltf = await new GLTFLoader(manager).loadAsync(sceneUrl);
+      loadingProgress("DOWNLOADING SCENE");
+      gltf = await new GLTFLoader(manager).loadAsync(sceneUrl, (event) => {
+        if (!Number.isFinite(event.loaded) || event.loaded <= receivedBytes) return;
+        receivedBytes = event.loaded;
+        // Content-Length may describe compressed transfer bytes while loaded is
+        // decoded bytes. Report real downloaded bytes without a false percent.
+        loadingProgress("DOWNLOADING SCENE", event.loaded);
+      });
     } catch (error) {
-      if (disposed) return;
+      if (disposed || terminal) return;
       if (httpStatusOf(error) === 404) {
         fail("missing", "Scene file not present", `${manifest.sceneUrl} was not found (404).`);
       } else {
@@ -489,11 +517,12 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
       }
       return;
     }
-    if (disposed) {
+    if (disposed || terminal) {
       disposeObjectTree(gltf.scene);
       return;
     }
     scene = gltf.scene;
+    loadingProgress("PREPARING SCENE");
     marker.dataset.stage = "scene-contract";
     if (manifest.anchors?.some((anchor) => !scene!.getObjectByName(anchor.screen) || !scene!.getObjectByName(anchor.anchorNode))) {
       fail("error", "Scene violates contract", "An authored screen or anchor is absent from the imported world");
@@ -544,6 +573,9 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     if (rafId !== 0) win.cancelAnimationFrame(rafId);
     rafId = 0;
     renderNow();
+    // A successfully drawn frame may wait for presentation in a hidden tab.
+    // Network watchdogs must not turn that healthy state into a load error.
+    clearStartupTimers();
 
     // Ready only after the frame for the requested time has been rendered and
     // the browser has had one frame to present it.
@@ -588,7 +620,9 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     dispose() {
       if (disposed) return;
       disposed = true;
+      clearStartupTimers();
       abort.abort();
+      manager.abort();
       listeners.clear();
       teardownScene();
     },

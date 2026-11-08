@@ -58,3 +58,9 @@ it('unmounts without completing when loading fails (error stays with the player)
   await show(false); await act(async () => root.render(<div />));
   expect(host.textContent).toBe(''); expect(completeSpy).not.toHaveBeenCalled();
 });
+
+it('shows measured bytes without a fabricated percentage', async () => {
+  await act(async()=>root.render(<Startup ready={false} onComplete={complete} detail="DOWNLOADING SCENE" loadedBytes={2_000_000}/>));
+  expect(host.textContent).toContain('DOWNLOADING SCENE');expect(host.textContent).toContain('2.0 MB received');
+  expect(host.textContent).not.toContain('%');expect(completeSpy).not.toHaveBeenCalled();
+});

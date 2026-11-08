@@ -17,7 +17,7 @@ if(basePath&&!/^\/[A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*$/.test(basePath))throw E
 // Resolve build inputs within this application.
 const nextConfig: NextConfig = {
   ...(staticExport?{output:'export' as const,trailingSlash:true,basePath}:{}),
-  env:{NEXT_PUBLIC_BASE_PATH:basePath,NEXT_PUBLIC_SCENE_REVISION:sceneRevision,NEXT_PUBLIC_OPENING_REVISION:openingRevision},
+  env:{NEXT_PUBLIC_BASE_PATH:basePath,NEXT_PUBLIC_SCENE_REVISION:sceneRevision,NEXT_PUBLIC_OPENING_REVISION:openingRevision,NEXT_PUBLIC_SCENE_PRELOAD_URL:`${basePath}/assets/${world}/${scenePath}?revision=${sceneRevision}`},
   reactStrictMode: true,
   poweredByHeader: false,
   turbopack: { root: __dirname },

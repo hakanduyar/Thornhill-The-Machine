@@ -2,10 +2,11 @@
 import {readFileSync} from "node:fs";
 import {URL as NodeURL} from "node:url";
 import {Blob as NodeBlob} from "node:buffer";
-import { Vector3, type Camera, type ColorRepresentation, type Object3D } from "three";
+import { Vector3, Group, Mesh, BufferGeometry, MeshBasicMaterial, type Camera, type ColorRepresentation, type Object3D } from "three";
+import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createPlayer, type PlayerHandle, type PlayerStatus, type RendererLike } from "../src/player/runtime";
+import { createPlayer, STARTUP_STALL_MS, type PlayerHandle, type PlayerStatus, type RendererLike } from "../src/player/runtime";
 import { parsePlayerParams, type QueryRecord } from "../src/player/time";
 import { buildContractGlb, fixtureManifest, type FixtureOptions } from "./fixtures/contractFixture";
 
@@ -168,6 +169,54 @@ afterEach(() => {
     m.host.remove();
   }
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
+
+describe("recoverable startup", () => {
+  it("aborts a stalled manifest and never reports ready", async () => {
+    installEnvironment({}); vi.useFakeTimers();
+    const fetcher=vi.fn(() => new Promise<Response>(() => {}));vi.stubGlobal('fetch',fetcher);
+    const m=track(mount({},'machine',false));
+    await vi.advanceTimersByTimeAsync(STARTUP_STALL_MS);
+    expect(m.marker.dataset.state).toBe('error');
+    expect(m.rendererCreated()).toBe(false);
+    expect((fetcher.mock.calls[0] as unknown as [string,RequestInit])[1].signal?.aborted).toBe(true);
+  });
+  it("disposes a scene that resolves after a startup timeout", async () => {
+    installEnvironment(sceneRoutes('machine'));vi.useFakeTimers();
+    let resolve!: (g:GLTF)=>void;
+    vi.spyOn(GLTFLoader.prototype,'loadAsync').mockImplementation(()=>new Promise<GLTF>(r=>{resolve=r;}));
+    const m=track(mount({},'machine',false));await vi.advanceTimersByTimeAsync(0);
+    expect(m.marker.dataset.stage).toBe('scene-assets');
+    await vi.advanceTimersByTimeAsync(STARTUP_STALL_MS);
+    const scene=new Group(),geometry=new BufferGeometry();scene.add(new Mesh(geometry,new MeshBasicMaterial()));
+    const disposed=vi.spyOn(geometry,'dispose');resolve({scene} as GLTF);await vi.advanceTimersByTimeAsync(0);
+    expect(disposed).toHaveBeenCalledOnce();expect(m.rendererCreated()).toBe(false);expect(m.marker.dataset.state).toBe('error');
+  });
+  it("keeps a slow progressing download alive and reports real bytes", async () => {
+    installEnvironment(sceneRoutes('machine'));vi.useFakeTimers();
+    let progress!: (event:ProgressEvent)=>void;
+    vi.spyOn(GLTFLoader.prototype,'loadAsync').mockImplementation((_url,onProgress)=>{progress=onProgress!;return new Promise<GLTF>(()=>{});});
+    const m=track(mount({},'machine',false));await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(STARTUP_STALL_MS-1);
+    progress(new ProgressEvent('progress',{loaded:2_000_000,total:1_000_000}));
+    await vi.advanceTimersByTimeAsync(STARTUP_STALL_MS-1);
+    expect(m.marker.dataset.state).toBe('loading');
+    expect(m.statuses.at(-1)).toMatchObject({loadedBytes:2_000_000});
+    await vi.advanceTimersByTimeAsync(1);expect(m.marker.dataset.state).toBe('error');
+  });
+  it("does not extend the deadline for duplicate, decreasing or nonfinite progress", async () => {
+    installEnvironment(sceneRoutes('machine'));vi.useFakeTimers();
+    let progress!: (event:ProgressEvent)=>void;
+    vi.spyOn(GLTFLoader.prototype,'loadAsync').mockImplementation((_url,onProgress)=>{progress=onProgress!;return new Promise<GLTF>(()=>{});});
+    const m=track(mount({},'machine',false));await vi.advanceTimersByTimeAsync(0);
+    progress({loaded:1000} as ProgressEvent);
+    await vi.advanceTimersByTimeAsync(STARTUP_STALL_MS-1);
+    for(const loaded of [1000,500,NaN,Infinity]) progress({loaded} as ProgressEvent);
+    expect(m.statuses.at(-1)).toMatchObject({loadedBytes:1000});
+    await vi.advanceTimersByTimeAsync(1);expect(m.marker.dataset.state).toBe('error');
+  });
 });
 
 describe("honest unavailable states", () => {
