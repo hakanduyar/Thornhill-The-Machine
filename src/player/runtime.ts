@@ -1,5 +1,6 @@
 import { LoadingManager, WebGLRenderer, type Camera, type ColorRepresentation, type Object3D } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 
 import {
   manifestPathFor,
@@ -442,7 +443,8 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     const manifestUrl = new URL(manifestPathFor(world), win.location.href).href;
     let response: Response;
     try {
-      response = await fetch(manifestUrl, { signal: abort.signal, cache: "no-store" });
+      response = await fetch(manifestUrl, { signal: abort.signal,
+        cache: new URL(manifestUrl).searchParams.has("revision") ? "force-cache" : "no-store" });
     } catch (error) {
       if (!disposed) fail("error", "Manifest request failed", `${manifestUrl}: ${describe(error)}`);
       return;
@@ -501,7 +503,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     let receivedBytes = 0;
     try {
       loadingProgress("DOWNLOADING SCENE");
-      gltf = await new GLTFLoader(manager).loadAsync(sceneUrl, (event) => {
+      gltf = await new GLTFLoader(manager).setMeshoptDecoder(MeshoptDecoder).loadAsync(sceneUrl, (event) => {
         if (!Number.isFinite(event.loaded) || event.loaded <= receivedBytes) return;
         receivedBytes = event.loaded;
         // Content-Length may describe compressed transfer bytes while loaded is
