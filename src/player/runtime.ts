@@ -11,6 +11,7 @@ import {
 } from "../contract/manifest";
 import { disposeObjectTree } from "./dispose";
 import { letterbox } from "./letterbox";
+import { createMachineFraming } from "./machineFraming";
 import { createSceneRig, type SceneRig } from "./sceneRig";
 import {
   clampTime,
@@ -120,6 +121,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
 
   let scene: Object3D | null = null;
   let rig: SceneRig | null = null;
+  let machineFraming: ReturnType<typeof createMachineFraming> | null = null;
   let renderer: RendererLike | null = null;
   let manifest: SceneManifest | null = null;
 
@@ -290,7 +292,8 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
 
   const layout = () => {
     if (!renderer || !manifest) return;
-    const rect = letterbox(host.clientWidth, host.clientHeight, manifest.sourceAspectRatio);
+    const rect = machineFraming?.(host.clientWidth, host.clientHeight)
+      ?? letterbox(host.clientWidth, host.clientHeight, manifest.sourceAspectRatio);
     frame.style.left = `${rect.x}px`;
     frame.style.top = `${rect.y}px`;
     frame.style.width = `${rect.width}px`;
@@ -421,6 +424,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     while (cleanups.length > 0) cleanups.pop()?.();
     rig?.dispose();
     rig = null;
+    machineFraming = null;
     if (scene) disposeObjectTree(scene);
     scene = null;
     if (renderer) {
@@ -568,6 +572,9 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     // projection aspect is set to the source footage aspect (letterboxed).
     rig.camera.aspect = manifest.sourceAspectRatio;
     rig.camera.updateProjectionMatrix();
+    if (world === "machine" && params.mode === "interactive") {
+      machineFraming = createMachineFraming(rig.camera, manifest.sourceAspectRatio);
+    }
 
     currentTime = targetTime = params.requestedTime ?? 0;
     attachInput();
