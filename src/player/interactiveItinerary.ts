@@ -24,10 +24,14 @@ const HOLD = 3;
 const PANE_DISTANCE = 2.69; // same camera-relative distance as the authored panes
 const PANE_W = 1.6;
 const PANE_H = 0.87882;
-/** Source-time cuts (between authored holds 2/3 and 5/6) and the side the detour takes. */
+/**
+ * Source-time cuts (between authored holds 2/3 and 5/6) and the side the detour takes. The detour is a
+ * lateral glide with only a restrained heading (|yaw| = 8 degrees, toward the side travelled) so the
+ * Neural view does not whip; the pane sits ahead of the final heading, so it stays face-on.
+ */
 const STOPS = [
-  { id: "ship", feedIndex: 8, cut: 21.5, lateral: -4, yaw: 40, before: 1, after: 2 },
-  { id: "apron", feedIndex: 9, cut: 49.5, lateral: 5, yaw: -40, before: 4, after: 5 },
+  { id: "ship", feedIndex: 8, cut: 21.5, lateral: -4, yaw: 8, before: 1, after: 2 },
+  { id: "apron", feedIndex: 9, cut: 49.5, lateral: 5, yaw: -8, before: 4, after: 5 },
 ] as const;
 
 type Anchor = { screen: string; anchorNode: string; holdStart: number; holdEnd: number };
