@@ -1,3 +1,4 @@
+import parkedC130 from "../public/assets/recorded-feeds/parked-c130/tracking.json";
 import dockedTracking from "../public/assets/recorded-feeds/docked-cargo/tracking.json";
 import { CAMERA_SPACE_ANCHORS, CAMERA_SPACE_EXTRAS } from "../src/player/cameraSpaceFeeds";
 import { Group, Mesh, MeshBasicMaterial, PerspectiveCamera, Vector3 } from "three";
@@ -117,6 +118,11 @@ describe("object markers and staged NASA tracking", () => {
     expect(sampleHeads(parseRecordedTracking(dockedTracking), 4)[0]?.entityKind).toBe("watercraft");
     expect(resolveCatalog(CAMERA_SPACE_ANCHORS, CAMERA_SPACE_EXTRAS).find(e => e.id === "docked-cargo")).toMatchObject({ anchorIndex: 8, mesh: "itinerary_ship_image" });
     expect(parseRecordedTracking(apronTracking).duration).toBe(33);
+    expect(parseRecordedTracking(parkedC130).duration).toBe(8);
+    expect(sampleHeads(parseRecordedTracking(parkedC130), 4)[0]?.entityKind).toBe("aircraft");
+    expect(resolveCatalog(CAMERA_SPACE_ANCHORS, CAMERA_SPACE_EXTRAS).find(e => e.id === "parked-c130")).toMatchObject({ anchorIndex: 9, mesh: "itinerary_apron_image" });
+    const { itinerary } = build();
+    expect(resolveCatalog(itinerary.anchors, itinerary.extras).find(e => e.id === "parked-c130")).toMatchObject({ anchorIndex: 9, mesh: "itinerary_apron_image", video: "/assets/recorded-feeds/parked-c130/loop.mp4" });
     expect(sampleHeads(parseRecordedTracking(shipTracking), 1)[0]?.entityKind).toBe("watercraft");
     expect(sampleHeads(parseRecordedTracking(apronTracking), 1)[0]?.entityKind).toBe("aircraft");
     expect(() => parseRecordedTracking({ duration: 1, tracks: [{ id: "a", entityKind: "ufo", keyframes: [{ t: 0, x: 0, y: 0, w: 0.1, h: 0.1, visible: true }] }] })).toThrow();

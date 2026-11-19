@@ -35,7 +35,7 @@ export const RECORDED_CATALOG: readonly RecordedCatalogEntry[] = [
  */
 export const RECORDED_ITINERARY_EXTRAS: readonly RecordedCatalogEntry[] = [
   { id: "docked-cargo", holdId: "ship", anchorIndex: 8, screen: "itinerary_ship", mesh: "itinerary_ship_image" },
-  { id: "apron", anchorIndex: 9, screen: "itinerary_apron", mesh: "itinerary_apron_image" },
+  { id: "parked-c130", holdId: "apron", anchorIndex: 9, screen: "itinerary_apron", mesh: "itinerary_apron_image" },
 ];
 
 export interface RecordedExtraHold { id: string; holdStart: number; holdEnd: number }
