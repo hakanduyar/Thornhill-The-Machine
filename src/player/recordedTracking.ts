@@ -5,7 +5,19 @@ export type EntityKind = "person" | "vehicle" | "watercraft" | "aircraft";
 const ENTITY_KINDS: readonly string[] = ["person", "vehicle", "watercraft", "aircraft"];
 export interface TrackingTrack { id: string; role?: string; entityKind?: EntityKind; keyframes: TrackKeyframe[] }
 export interface RecordedTracking { duration: number; tracks: TrackingTrack[] }
-export interface Head { x: number; y: number; w: number; h: number; entityKind?: EntityKind }
+/** Display-only person square palette; never a classification of the subject. */
+export type PersonTone = "yellow" | "red" | "redwhite";
+export interface Head { x: number; y: number; w: number; h: number; entityKind?: EntityKind; tone?: PersonTone }
+
+/** Literal authored display map by track id (about 15% of person tracks); every other person square is white. */
+const PERSON_TONES: Readonly<Record<string, PersonTone>> = {
+  "blue-jacket": "yellow",
+  "central-light": "yellow",
+  "backpack-walker": "yellow",
+  "burgundy": "yellow",
+  "far-red": "red",
+  "foreground-walker": "redwhite",
+};
 
 const BOUNDS_EPSILON = 1e-5;
 
@@ -44,8 +56,9 @@ export function parseRecordedTracking(value: unknown): RecordedTracking {
 export function sampleHeads(data: RecordedTracking, time: number): Head[] {
   if (!Number.isFinite(time) || time < 0 || time > data.duration) return [];
   const heads: Head[] = [];
-  for (const { keyframes, entityKind } of data.tracks) {
-    const kind = entityKind ? { entityKind } : {};
+  for (const { id, keyframes, entityKind } of data.tracks) {
+    const tone = entityKind === "person" ? PERSON_TONES[id] : undefined;
+    const kind = { ...(entityKind ? { entityKind } : {}), ...(tone ? { tone } : {}) };
     const first = keyframes[0]!;
     const last = keyframes[keyframes.length - 1]!;
     if (time < first.t || time > last.t) continue;
@@ -70,7 +83,8 @@ export function sampleHeads(data: RecordedTracking, time: number): Head[] {
   return heads;
 }
 
-const RETICLE_COLOR = "#c6bd76"; // person head marker only: muted yellow
+const RETICLE_COLOR = "#f1f0ea"; // person square default: off-white
+const TONE_COLORS = { yellow: "#c6bd76", red: "#b8504a" } as const;
 const RETICLE_SCALE = 1.36;
 
 const VEHICLE_COLOR = "#e4e6e0";
@@ -124,7 +138,7 @@ function drawVehicleBox(ctx: CanvasRenderingContext2D, width: number, height: nu
 }
 
 /**
- * Neutral subject marker. Person: muted-yellow dashed square with corner ticks.
+ * Neutral subject marker. Person: off-white (rarely muted yellow/red/red-white by authored id) dashed square with corner ticks.
  * Vehicle: plain rectangle on the authored bounds. Watercraft and aircraft use their own shapes.
  */
 export function drawNeutralReticle(ctx: CanvasRenderingContext2D, width: number, height: number, head: Head): void {
@@ -137,7 +151,8 @@ export function drawNeutralReticle(ctx: CanvasRenderingContext2D, width: number,
   const corner = side * 0.12;
   ctx.save();
   ctx.translate(cx, cy);
-  ctx.strokeStyle = RETICLE_COLOR;
+  const tone = head.tone;
+  ctx.strokeStyle = tone === "yellow" ? TONE_COLORS.yellow : tone === "red" || tone === "redwhite" ? TONE_COLORS.red : RETICLE_COLOR;
   ctx.shadowColor = "rgba(0,0,0,0.6)";
   ctx.shadowBlur = 1;
   ctx.shadowOffsetY = 1;
@@ -146,6 +161,7 @@ export function drawNeutralReticle(ctx: CanvasRenderingContext2D, width: number,
   ctx.strokeRect(-half, -half, half * 2, half * 2);
   ctx.setLineDash([]);
   ctx.lineWidth = 2.2;
+  if (tone === "redwhite") ctx.strokeStyle = RETICLE_COLOR;
   ctx.beginPath();
   for (const sx of [-1, 1]) {
     for (const sy of [-1, 1]) {
