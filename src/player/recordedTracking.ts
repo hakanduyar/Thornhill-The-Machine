@@ -70,7 +70,7 @@ export function sampleHeads(data: RecordedTracking, time: number): Head[] {
   return heads;
 }
 
-const RETICLE_COLOR = "#d9dcd3"; // person head marker only
+const RETICLE_COLOR = "#c6bd76"; // person head marker only: muted yellow
 const RETICLE_SCALE = 1.36;
 
 const VEHICLE_COLOR = "#e4e6e0";
@@ -124,7 +124,7 @@ function drawVehicleBox(ctx: CanvasRenderingContext2D, width: number, height: nu
 }
 
 /**
- * Neutral subject marker. Person: neutral dashed square with corner ticks.
+ * Neutral subject marker. Person: muted-yellow dashed square with corner ticks.
  * Vehicle: plain rectangle on the authored bounds. Watercraft and aircraft use their own shapes.
  */
 export function drawNeutralReticle(ctx: CanvasRenderingContext2D, width: number, height: number, head: Head): void {
