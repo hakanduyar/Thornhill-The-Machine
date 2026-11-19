@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  CatmullRomCurve3,
   Color,
   DataTexture,
   EdgesGeometry,
@@ -36,9 +35,24 @@ import { createRecordedFeed, type RecordedFeedController } from "./recordedFeed"
 import styles from "./CameraSpace.module.css";
 
 const LAST = CAMERA_SPACE_STOPS.length - 1;
-const START = -0.75;
+const START = -0.9;
+/** Minimum time between navigation steps, and the in-flight distance beyond which new input is ignored. */
+const STEP_COOLDOWN_MS = 650;
+const KEY_COOLDOWN_MS = 500;
+const MAX_LEAD = 0.55;
 const PANE_WIDTH = 18;
 const slotOfId = new Map(CAMERA_SPACE_STOPS.map((stop) => [stop.id, stop.slot]));
+
+/**
+ * Segments (by starting stop) where the incoming pane flies up to the camera. Only the sign is used: the side of
+ * the frame the pane settles toward (right/up, left/down, right/down); the magnitude is derived from the viewport
+ * aspect so the pane always stays inside the frame.
+ */
+const APPROACH: Readonly<Record<number, readonly [number, number]>> = {
+  1: [0.62, 0.3],
+  4: [-0.62, -0.3],
+  7: [0.62, -0.3],
+};
 
 const random = (n: number) => {
   const v = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -92,6 +106,9 @@ export function CameraSpace() {
     let reduced = motion.matches;
 
     const locations = CAMERA_SPACE_STOPS.map((stop) => new Vector3(...stop.position));
+    const paneBySlot: (Group | undefined)[] = [];
+    const paneSlotOf = new Map<Group, number>();
+    let displaced: Group | null = null;
 
     const makePane = (stop: (typeof CAMERA_SPACE_STOPS)[number], texture: Texture) => {
       const geometry = new PlaneGeometry(PANE_WIDTH, (PANE_WIDTH * 9) / 16);
@@ -104,6 +121,8 @@ export function CameraSpace() {
       const group = new Group();
       group.name = stop.screen;
       group.position.copy(locations[stop.slot]!);
+      paneBySlot[stop.slot] = group;
+      paneSlotOf.set(group, stop.slot);
       const pane = new Mesh(geometry, material);
       pane.name = stop.mesh;
       group.add(pane);
@@ -125,21 +144,16 @@ export function CameraSpace() {
     };
     const eye = new Vector3();
     const aim = new Vector3();
-    let curves: CatmullRomCurve3[] = [];
-    const rebuildCurves = () => {
-      const d = distance();
-      curves = locations.slice(0, -1).map((a, i) => {
-        const b = locations[i + 1]!;
-        const c0 = a.clone().add(new Vector3(0, 0, d));
-        const c3 = b.clone().add(new Vector3(0, 0, d));
-        const side = i % 3 === 0 ? 8 : i % 3 === 1 ? -7 : 3;
-        return new CatmullRomCurve3([
-          c0,
-          c0.clone().lerp(c3, 0.3).add(new Vector3(side, i % 2 ? 5 : -4, 10)),
-          c0.clone().lerp(c3, 0.7).add(new Vector3(-side * 0.3, 0, 8)),
-          c3,
-        ]);
-      });
+    let fit = 15;
+    // Geometric path profile per segment (route time keeps its own eased fraction f; all profiles are 0 at f=0 and 1 at f=1).
+    // 0 traverse (lateral S-bow), 1 push-in (front-loaded), 2 crane (vertical leads), 3 settle (near-still ends, brisk middle).
+    const shape = (i: number, f: number): readonly [number, number, number] => {
+      switch (i % 4) {
+        case 1: { const g = 1 - (1 - f) * (1 - f); return [g, g, g]; }
+        case 2: return [smooth(clamp((f - 0.2) / 0.8, 0, 1)), smooth(clamp(f * 1.3, 0, 1)), f];
+        case 3: { const g = smooth(smooth(f)); return [g, g, g]; }
+        default: return [smooth(f), f, f];
+      }
     };
 
     const pose = () => {
@@ -147,14 +161,91 @@ export function CameraSpace() {
       const t = position - i;
       const a = locations[i]!;
       const b = locations[i + 1]!;
-      // Hold briefly at each camera, then traverse a different lateral/vertical route.
-      const f = smooth(clamp((t - 0.1) / 0.8, 0, 1));
-      curves[i]!.getPoint(f, eye);
-      aim.copy(a).lerp(b, f);
-      if (position < 0) {
-        // Overview: pull back and up before the first camera.
-        eye.z += -position * 150;
-        eye.y += -position * 20;
+      // Hold at each camera (exactly centred, facing straight down the field), then travel.
+      const f = smooth(clamp((t - 0.12) / 0.76, 0, 1));
+      // Approach segments: the camera stays parked on stop i while the incoming pane's whole group translates
+      // toward it (first half), then the pane glides back to its catalog transform as the camera travels (second half).
+      const approach = APPROACH[i];
+      // The camera starts easing away while the pane is still arriving (no deliberate middle stop); the pane's peak
+      // pose is camera-relative, so the two stay locked together through the handoff.
+      let paneWeight = 0;
+      let cf = f;
+      if (approach) {
+        paneWeight = f < 0.5 ? smooth(f / 0.5) : 1 - smooth((f - 0.5) / 0.5);
+        cf = smooth(clamp((f - 0.35) / 0.65, 0, 1));
+      }
+      if (displaced && (!approach || displaced !== paneBySlot[i + 1])) {
+        displaced.position.copy(locations[paneSlotOf.get(displaced)!]!);
+        displaced.updateMatrixWorld(true);
+        displaced = null;
+      }
+      const [gx, gy, gz] = shape(i, cf);
+      const bow = approach ? 0 : Math.sin(Math.PI * f);
+      eye.set(
+        a.x + (b.x - a.x) * gx + (i % 4 === 0 ? (i % 8 === 0 ? 6 : -5) * bow : 0),
+        a.y + (b.y - a.y) * gy + (i % 4 === 2 ? 4 * bow : 0),
+        a.z + fit + (b.z - a.z) * gz,
+      );
+      // Heading stays parallel to the world; only a faint lean (zero at both holds) toward the next pane.
+      aim.set(
+        eye.x + clamp(b.x - a.x, -1, 1) * 5 * bow,
+        eye.y + clamp(b.y - a.y, -1, 1) * 3 * bow,
+        eye.z - 100,
+      );
+      // Overview: straight back along the view axis, level and centred on the first pane.
+      if (position < 0) eye.z += -position * 150;
+      const incoming = paneBySlot[i + 1];
+      if (approach && incoming) {
+        if (paneWeight > 0) {
+          // Projection bound (heading is exactly -z on approach segments, bow = 0): at distance d a pane of half-size
+          // (9, 5.0625) spans NDC |x| <= 9/(d*tanH) + |ox|/(d*tanH) and |y| <= 5.0625/(d*tan) + |oy|/(d*tan),
+          // tanH = tan(fov/2)*aspect. d = 0.9*fit and the offsets are clamped so both stay <= 0.95 on any aspect.
+          const tan = Math.tan((camera.fov * Math.PI) / 360);
+          const tanH = tan * camera.aspect;
+          const d = fit * 0.9;
+          const ox = approach[0] > 0 ? 1 : -1;
+          const oy = approach[1] > 0 ? 1 : -1;
+          const offX = ox * Math.min(PANE_WIDTH * 0.1, Math.max(0, 0.95 - 9 / (d * tanH)) * d * tanH);
+          const offY = oy * Math.min(PANE_WIDTH * 0.06, Math.max(0, 0.95 - 5.0625 / (d * tan)) * d * tan);
+          const home = locations[i + 1]!;
+          const frontX = eye.x + offX;
+          const frontY = eye.y + offY;
+          const frontZ = eye.z - d;
+          // Depth first, lateral second: while below the crossing weight the pane stays at its catalog x/y (more than a
+          // pane away from pane i on one axis, so it cannot touch it) and rises through pane i's plane; only then does
+          // it slide laterally into the frame, always in front of pane i.
+          const wc = 0.4;
+          const planeZ = a.z + (frontZ - a.z) * 0.5;
+          const sc = clamp((home.z - planeZ) / (home.z - frontZ), 0, 1);
+          const zN = paneWeight < wc ? sc * (paneWeight / wc) : sc + (1 - sc) * smooth((paneWeight - wc) / (1 - wc));
+          const xN = paneWeight < wc ? 0 : 1 - (1 - smooth((paneWeight - wc) / (1 - wc))) ** 2;
+          const px = home.x + (frontX - home.x) * xN;
+          const py = home.y + (frontY - home.y) * xN;
+          const pz = home.z + (frontZ - home.z) * zN;
+          // Final-pose bound, relative to the ACTUAL camera (axes are world-aligned on approach segments, bow = 0). With
+          // depth dz = eye.z - pz (>= 0.9*fit, since the eye never gets closer than fit above home and the pane never
+          // closer than 0.9*fit), the whole pane stays inside 95% of the viewport iff
+          //   |px-eye.x| <= 0.95*dz*tanH - 9   and   |py-eye.y| <= 0.95*dz*tan - 5.0625.
+          // Clamping the camera-relative offset to those limits holds for every pose in the visible approach and return;
+          // it is the identity at the terminal (eye == home + fit, offsets 0). Fully on once the pane is in the
+          // foreground (approach weight past the crossing, and throughout the return), blended in just before so a
+          // distant, not-yet-visible pane is not pulled in unnaturally. Pure function of position, so reverse-safe.
+          const w = f >= 0.5 ? 1 : smooth(clamp((paneWeight - wc) / 0.1, 0, 1));
+          const dz = Math.max(eye.z - pz, 1e-3);
+          const limX = Math.max(0, 0.95 * dz * tanH - 9);
+          const limY = Math.max(0, 0.95 * dz * tan - 5.0625);
+          const rx = px - eye.x;
+          const ry = py - eye.y;
+          incoming.position.set(
+            eye.x + rx + (clamp(rx, -limX, limX) - rx) * w,
+            eye.y + ry + (clamp(ry, -limY, limY) - ry) * w,
+            pz,
+          );
+          displaced = incoming;
+        } else {
+          incoming.position.copy(locations[i + 1]!);
+        }
+        incoming.updateMatrixWorld(true);
       }
       camera.position.copy(eye);
       camera.lookAt(aim);
@@ -173,20 +264,40 @@ export function CameraSpace() {
       camera.aspect = w / Math.max(h, 1);
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
-      rebuildCurves();
+      fit = distance();
     };
     const observer = new ResizeObserver(resize);
     observer.observe(el);
     resize();
 
-    // Keyboard/swipe step: from the in-flight target to the next/previous whole camera. Wheel never snaps.
-    const jump = (direction: number) => {
-      target = clamp(direction > 0 ? Math.floor(target + 1e-3) + 1 : Math.ceil(target - 1e-3) - 1, 0, LAST);
+    // Every input moves exactly one stop; ignored during the cooldown or while the previous step is still well in flight.
+    let stepAt = 0;
+    const jump = (direction: number, cooldown = STEP_COOLDOWN_MS) => {
+      const now = performance.now();
+      if (now - stepAt < cooldown || Math.abs(target - position) > MAX_LEAD) return;
+      const next = direction > 0 ? Math.floor(target + 1e-3) + 1 : target <= 0 ? START : Math.ceil(target - 1e-3) - 1;
+      const clamped = clamp(next, START, LAST);
+      if (clamped === target) return;
+      target = clamped;
+      stepAt = now;
     };
+    // Wheel: accumulate intent, fire one step per burst; inertial tails are absorbed until the wheel goes quiet.
+    let wheelSum = 0;
+    let wheelQuiet = 0;
+    let wheelLocked = false;
     const wheel = (e: WheelEvent) => {
       e.preventDefault();
       const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1;
-      target = clamp(target + clamp(e.deltaY * unit, -120, 120) * 0.0042, START, LAST);
+      window.clearTimeout(wheelQuiet);
+      wheelQuiet = window.setTimeout(() => { wheelLocked = false; wheelSum = 0; }, 180);
+      if (wheelLocked) return;
+      wheelSum += e.deltaY * unit;
+      if (Math.abs(wheelSum) >= 90) {
+        const before = target;
+        jump(wheelSum > 0 ? 1 : -1);
+        if (target !== before) wheelLocked = true;
+        wheelSum = 0;
+      }
     };
     // One gesture moves at most one camera, committed on crossing the threshold; taps and multi-touch do nothing.
     let gesture: { id: number; x: number; y: number; done: boolean } | null = null;
@@ -219,10 +330,10 @@ export function CameraSpace() {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       if (forward.includes(e.key) || backward.includes(e.key)) {
         e.preventDefault();
-        jump(forward.includes(e.key) ? 1 : -1);
+        if (!e.repeat) jump(forward.includes(e.key) ? 1 : -1, KEY_COOLDOWN_MS);
       } else if (e.key === "Home" || e.key === "End") {
         e.preventDefault();
-        target = e.key === "Home" ? 0 : LAST;
+        if (!e.repeat) target = e.key === "Home" ? START : LAST;
       }
     };
     const reset = () => endGesture();
@@ -278,7 +389,7 @@ export function CameraSpace() {
       if (!document.hidden) {
         if (reduced) position = target;
         else {
-          position += (target - position) * (1 - Math.exp(-dt * 3.1));
+          position += (target - position) * (1 - Math.exp(-dt * 2.4));
           if (Math.abs(target - position) < 0.0001) position = target;
         }
         pose();
@@ -335,13 +446,8 @@ export function CameraSpace() {
         const ey = y - cy;
         if (Math.hypot(ex / 1.25, ey / 0.95) < minClear + w * 0.45) return;
         const rr = random(x * 3.1 + y * 1.7 + z * 0.37);
-        // Planes yaw and pitch gently toward the route so layers read as depth, not flat wallpaper.
-        background.push({
-          x, y, z, w, texture: 0, shade,
-          ry: clamp(-ex / 170, -0.5, 0.5) + (rr - 0.5) * 0.12,
-          rx: clamp(ey / 260, -0.3, 0.3),
-          rz: (random(rr * 977) - 0.5) * 0.1,
-        });
+        // Orderly: planes stay parallel to the world; a minority take a small fixed yaw for rhythm.
+        background.push({ x, y, z, w, texture: 0, shade, ry: rr < 0.12 ? -0.1 : rr > 0.88 ? 0.1 : 0, rx: 0, rz: 0 });
       };
 
       // 1) Continuous layered shells (near/mid/far) from behind the first camera to well past the last.
@@ -349,6 +455,7 @@ export function CameraSpace() {
         { r0: 30, r1: 48, w0: 3.5, w1: 7, n: 3, shade: 0.7 },
         { r0: 46, r1: 86, w0: 6, w1: 12, n: 3, shade: 0.85 },
         { r0: 84, r1: 155, w0: 10, w1: 19, n: 3, shade: 1 },
+        { r0: 150, r1: 270, w0: 15, w1: 28, n: 2, shade: 0.8 },
       ];
       // Depth derives from the last stop: shells, backdrop and tail run at least 400 units beyond it and taper out.
       const tailZ = locations[LAST]!.z - 400;
@@ -455,6 +562,7 @@ export function CameraSpace() {
       el.removeEventListener("lostpointercapture", endGesture);
       window.removeEventListener("keydown", key);
       window.removeEventListener("blur", reset);
+      window.clearTimeout(wheelQuiet);
       endGesture();
       batches.forEach((m) => { scene.remove(m); m.dispose(); });
       groups.forEach((g) => scene.remove(g));
