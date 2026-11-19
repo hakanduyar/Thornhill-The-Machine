@@ -11,6 +11,7 @@ import {
 } from "../contract/manifest";
 import { disposeObjectTree } from "./dispose";
 import { letterbox } from "./letterbox";
+import { applyMachineConnectorTreatment } from "./machineConnectorTreatment";
 import { createMachineFraming } from "./machineFraming";
 import { createInteractiveItinerary, ITINERARY_EXTRA_SECONDS, type InteractiveItinerary } from "./interactiveItinerary";
 import { createRecordedFeed, type RecordedFeedController } from "./recordedFeed";
@@ -125,6 +126,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
   let scene: Object3D | null = null;
   let rig: SceneRig | null = null;
   let machineFraming: ReturnType<typeof createMachineFraming> | null = null;
+  let machineConnector: (() => void) | null = null;
   let recordedFeed: RecordedFeedController | null = null;
   let renderer: RendererLike | null = null;
   let manifest: SceneManifest | null = null;
@@ -533,6 +535,8 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     // After the feed has handed the pane meshes back: removes the panes and frees their resources.
     itinerary?.dispose();
     itinerary = null;
+    machineConnector?.();
+    machineConnector = null;
     if (scene) disposeObjectTree(scene);
     scene = null;
     if (renderer) {
@@ -682,6 +686,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     rig.camera.updateProjectionMatrix();
     if (world === "machine" && params.mode === "interactive") {
       machineFraming = createMachineFraming(rig.camera, manifest.sourceAspectRatio);
+      machineConnector = applyMachineConnectorTreatment(gltf.scene);
     }
 
     if (recordedOptIn) {
