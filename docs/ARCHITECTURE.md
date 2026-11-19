@@ -6,6 +6,8 @@ See [architecture decisions](decisions/README.md) for the current technology rat
 - `src/contract/manifest.ts`: validates the local scene manifest and same-origin asset URLs.
 - `src/player/sceneRig.ts`: binds the imported camera and animation; evaluates exact authored time with Three's animation mixer.
 - `src/player/runtime.ts`: rendering, input, bounded manual traversal, playback and visibility lifecycle.
+- `src/player/machineSynapse.ts`: bounded procedural neural branches with owned geometry and reversible source-layer visibility.
+- `src/player/machineTreatment.ts`: cloned-material tonal treatment evaluated in authored time, independently of the optional extended navigation clock.
 - `src/player/Startup.tsx`: foreground-time opening sequence and interaction barrier.
 - `public/assets/machine/`: the bundled scene and minimal public manifest.
 - `tests/`: contract, timing, route and lifecycle checks.
