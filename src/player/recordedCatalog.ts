@@ -16,7 +16,7 @@ export interface RecordedCatalogEntry {
 }
 
 export const RECORDED_CATALOG: readonly RecordedCatalogEntry[] = [
-  { id: "m05", anchorIndex: 0, screen: "screen_01_hallway", mesh: "screen_01_hallway_image" },
+  { id: "parking-walk", anchorIndex: 0, screen: "screen_01_hallway", mesh: "screen_01_hallway_image" },
   { id: "covered-road", anchorIndex: 1, screen: "screen_02_roadside_car", mesh: "screen_02_roadside_car_image" },
   { id: "m06", anchorIndex: 2, screen: "screen_03_lockers", mesh: "screen_03_lockers_image" },
   { id: "m04", anchorIndex: 3, screen: "screen_04_armed_corridor", mesh: "screen_04_armed_corridor_image" },

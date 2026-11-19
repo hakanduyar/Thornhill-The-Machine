@@ -1,0 +1,57 @@
+Recorded feed parking-walk - credits, provenance and license
+============================================================
+
+Files in this directory
+  loop.mp4        42-second silent excerpt (H.264, 960x540, 30 fps, faststart)
+  poster.jpg      still frame derived from the excerpt
+  tracking.json   authored head-marker tracks (2 neutral person tracks)
+  loop.mp4 SHA-256: 4BFDC569336B7A8819A736400321B86336FA50956887B162F3FAD40B8CFF9B18
+  loop.mp4 size: 2990605 bytes
+
+Source
+  MEVA (Multiview Extended Video with Activities) dataset.
+  Camera G424 (school), file:
+  https://mevadata-public-01.s3.amazonaws.com/drops-123-r13/2018-03-09/10/2018-03-09.10-10-00.10-15-00.school.G424.r13.avi
+  Excerpt: native seconds 148-190 of that file (42 seconds, forward only).
+
+Attribution
+  Video: MEVA, Kitware, Inc. / IARPA.
+  Dataset site: https://mevadata.org/
+
+License
+  The source video is offered under the Creative Commons Attribution 4.0
+  International license (CC BY 4.0):
+  https://creativecommons.org/licenses/by/4.0/
+  Dataset license statement: https://mevadata.org/resources/MEVA-data-license.txt
+  In short: you may share and adapt the material, including commercially,
+  provided you give appropriate credit, link to the license and indicate if
+  changes were made. See the linked texts for the binding terms; this file is
+  a summary, not the license.
+
+Changes made (derivative material)
+  - Cut a 42-second excerpt (native 148-190 s) from the original recording.
+  - Cropped a fixed 1152x648 region at x=768, y=432 of the source frame. This
+    is a fixed crop of the same camera, not a different location, and it is
+    not a seamless composition.
+  - Scaled the crop to 960x540 with square pixels.
+  - Removed audio and re-encoded as H.264 MP4 (CRF 25, native 30 fps,
+    faststart).
+  - Extracted a still frame as the poster.
+  - tracking.json is original work of this project: hand-authored normalized
+    bounds (top-left origin) for two neutral head tracks (subject-01,
+    subject-02), measured from the excerpt's own video timestamps. It is not
+    output of live inference and not an identification of any person.
+
+Notes
+  - This is an ordinary recorded replay shown inside a fictional interface.
+    It is not a live camera. The scene starts and ends empty, so the loop
+    point is a natural empty-scene cycle; this is a factual description of the
+    excerpt, not a guarantee that the seam is invisible. The empty entry and
+    exit were observed in the excerpt but are not final tracking proof.
+  - This material is not television footage and is not affiliated with or
+    endorsed by MEVA, Kitware, IARPA or the original production.
+  - License scope: loop.mp4 and poster.jpg retain CC BY 4.0 from the source
+    material. The project-authored tracking.json is also offered under
+    CC BY 4.0 as part of this asset package. The project's MIT license does
+    not apply to the files in this directory; the original application code
+    remains MIT.

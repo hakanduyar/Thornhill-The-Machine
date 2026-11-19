@@ -1,3 +1,4 @@
+import parkingWalk from "../public/assets/recorded-feeds/parking-walk/tracking.json";
 // @vitest-environment jsdom
 import { BoxGeometry, Group, Mesh, MeshBasicMaterial, Texture } from "three";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -5,11 +6,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRecordedFeed } from "../src/player/recordedFeed";
 import { MAX_DECODERS, RECORDED_CATALOG, resolveCatalog, selectPrepared } from "../src/player/recordedCatalog";
 import manifest from "../public/assets/machine/manifest.json";
-import { sampleHeads, type RecordedTracking } from "../src/player/recordedTracking";
+import { parseRecordedTracking, sampleHeads, type RecordedTracking } from "../src/player/recordedTracking";
 
 const frame = (t: number, x: number, visible = true) => ({ t, x, y: 0.2, w: 0.1, h: 0.1, visible });
 
 describe("recorded tracking interpolation", () => {
+  it("accepts the two parking head tracks and keeps the empty wrap unmarked",()=>{const track=parseRecordedTracking(parkingWalk);expect(track.tracks).toHaveLength(2);expect(track.duration).toBe(42);expect(sampleHeads(track,0)).toEqual([]);expect(sampleHeads(track,41.99)).toEqual([]);});
   const data: RecordedTracking = {
     duration: 10,
     tracks: [{ id: "a", keyframes: [frame(2, 0.1), frame(4, 0.5), frame(6, 0.5, false), frame(8, 0.7)] }],
@@ -33,7 +35,7 @@ describe("recorded catalog", () => {
   it("maps eight recordings to every original screen in order", () => {
     const entries = resolveCatalog(anchors);
     expect(entries.map((e) => e.anchorIndex)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
-    expect(entries.map((e) => e.id)).toEqual(["m05", "covered-road", "m06", "m04", "m07", "m01", "m02", "m03"]);
+    expect(entries.map((e) => e.id)).toEqual(["parking-walk", "covered-road", "m06", "m04", "m07", "m01", "m02", "m03"]);
     expect(entries[1]).toMatchObject({id:"covered-road",mesh:"screen_02_roadside_car_image"});
     expect(entries[7]?.mesh).toBe("focal_screen");
     expect(entries[3]?.holdStart).toBe(anchors[3]!.holdStart);
