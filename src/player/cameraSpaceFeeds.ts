@@ -21,7 +21,7 @@ const posterOf = (id: string) => `/assets/recorded-feeds/${id}/poster.jpg`;
 
 /** Uneven, asymmetric positions over roughly 1200 units of depth. */
 const LAYOUT: ReadonlyArray<Omit<CameraSpaceStop, "slot" | "poster" | "recorded"> & { poster?: string }> = [
-  { id: "m05", screen: "screen_01_hallway", mesh: "screen_01_hallway_image", position: [-26, 10, -70] },
+  { id: "parking-walk", screen: "screen_01_hallway", mesh: "screen_01_hallway_image", position: [-26, 10, -70] },
   { id: "covered-road", screen: "screen_02_roadside_car", mesh: "screen_02_roadside_car_image", position: [34, -12, -190] },
   { id: "ship", screen: "itinerary_ship", mesh: "itinerary_ship_image", position: [-8, 26, -310] },
   { id: "m06", screen: "screen_03_lockers", mesh: "screen_03_lockers_image", position: [-50, -22, -440] },
