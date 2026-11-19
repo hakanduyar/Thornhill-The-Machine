@@ -1,0 +1,44 @@
+Recorded feed parked-c130 - credits, provenance and license
+===========================================================
+
+Files in this directory
+  loop.mp4        8-second silent excerpt (H.264, 960x540)
+  poster.jpg      still frame derived from the excerpt
+  tracking.json   authored whole-aircraft box (1 neutral track)
+  loop.mp4 SHA-256: 95E74BFAB7392110DE6E407F2B9EF829C3D98A04842454AB7F92476CB7181729
+
+Source
+  "C-130 engine check", Jeremy Farson, 165th Airlift Wing, 2017-09-29.
+  DVIDS: https://www.dvidshub.net/video/554984/c-130-engine-check
+  Media file used (1024x576):
+  https://d34w7g4gy10iej.cloudfront.net/video/1709/DOD_104910980/DOD_104910980-1024x576-1769k.mp4
+  Excerpt: seconds 6-14 of that file (8 seconds), a night shot of a parked
+  C-130 during an engine run.
+
+Credit
+  Video: Jeremy Farson, 165th Airlift Wing, via DVIDS.
+
+License
+  Video and poster: public domain as a work of the U.S. Government, subject
+  to the DVIDS copyright page and its restrictions:
+  https://www.dvidshub.net/about/copyright
+  No endorsement by the Department of Defense, the 165th Airlift Wing or
+  DVIDS is stated or implied.
+  tracking.json: original work of this project, offered under the MIT license.
+  The original application code remains MIT.
+
+Changes made (derivative material)
+  - Cut seconds 6-14 (8 seconds) from the original 1024x576 file; no upscaling.
+  - Translation-only stabilization: ffmpeg vidstabdetect (tripod=1), then
+    transform with tripod=1, optzoom=0, zoom=0, maxangle=0.
+  - Fixed crop 960:540 at offset 32:18, H.264 (CRF 25), fast-start; audio removed.
+  - Poster extracted as a still frame.
+  - tracking.json: one hand-authored static box around the whole aircraft
+    (normalized, top-left origin; excludes the ground person and stairs),
+    identical at start and end because the aircraft is stationary. Not output
+    of live inference and not an identification of anyone or anything.
+
+Notes
+  - An ordinary recorded replay shown inside a fictional interface, not a
+    live camera. Propeller and beacon motion are natural; the loop point is a
+    plain restart and is not guaranteed to be mathematically seamless.

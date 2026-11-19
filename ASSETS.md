@@ -22,7 +22,8 @@ OpenAI image generation produced the synthetic photographic stills. Existing emb
 | Camera-space roadside still (`camera-space/roadside-still.webp`) | Lossless crop of the synthetic atlas already embedded in the bundled GLB; see `public/assets/camera-space/CREDITS.md`. Retained in the repository, no longer shown by the camera-space interface | MIT, within the scope above |
 | Recorded-feed excerpts (`recorded-feeds/m01` to `m04`, `m06`, `m07`, `covered-road` and `parking-walk`, opt-in only; the earlier `m05` files remain in the repository as an unused rollback) | MEVA dataset, Kitware, Inc. / IARPA; excerpted and re-encoded | CC BY 4.0 (video, poster and project-authored tracking), not MIT |
 | Recorded-feed excerpt (`recorded-feeds/docked-cargo`, extended itinerary only) | Mixkit stock video; excerpted and re-encoded | Mixkit Stock Video Free License (video and poster), MIT (project-authored tracking), not MIT/CC for the footage |
-| Recorded-feed excerpt (`recorded-feeds/apron`, extended itinerary only; the earlier `ship` files remain as an unused rollback) | NASA Scientific Visualization Studio; excerpted and re-encoded | NASA public domain (video and poster), CC BY 4.0 (project-authored tracking), not MIT |
+| Recorded-feed excerpt (`recorded-feeds/parked-c130`, extended itinerary only; replaces the active apron pane) | DVIDS, "C-130 engine check", Jeremy Farson / 165th Airlift Wing, 2017-09-29 ([source](https://www.dvidshub.net/video/554984/c-130-engine-check)); stabilized, cropped and re-encoded | Public domain (video and poster; see [DVIDS copyright](https://www.dvidshub.net/about/copyright), no endorsement), MIT (project-authored tracking) |
+| Recorded-feed excerpt (`recorded-feeds/apron`, inactive rollback; the earlier `ship` files also remain as an unused rollback) | NASA Scientific Visualization Studio; excerpted and re-encoded | NASA public domain (video and poster), CC BY 4.0 (project-authored tracking), not MIT |
 
 ## Optional recorded-feed experiment (`?recordedFeed=1`)
 
@@ -62,6 +63,8 @@ Two further silent excerpts appear only in the extended itinerary, on two panes 
 - **Tracking:** each `tracking.json` is project-authored (one neutral object track, normalized top-left bounds, not live inference), offered under CC BY 4.0. The application code remains MIT.
 - **Changes:** ship: cut, resized to 720x540 and pillarboxed to 960x540, re-encoded as silent H.264, poster extracted. Apron: cut to a fixed-camera segment (an earlier cut's first 2 seconds, which opened with a zoom, were removed), re-encoded as silent H.264 at 960x540 and 24 fps, new poster at t=0.
 - **Limitations:** ordinary recorded replays, not live cameras. The ship clip ends after the ship has left, and neither loop point is seamless. The apron aircraft is parked.
+
+The active aircraft pane id is `parked-c130`: an 8-second silent night excerpt (seconds 6-14) of a parked C-130 engine run from DVIDS (Jeremy Farson, 165th Airlift Wing, 2017-09-29), `loop.mp4` SHA-256 `95E74BFAB7392110DE6E407F2B9EF829C3D98A04842454AB7F92476CB7181729`. It replaces the NASA `apron` pane, whose files stay as an inactive rollback. Details: `public/assets/recorded-feeds/parked-c130/CREDITS.txt`.
 
 The `ship` folder (NASA, Seal Beach departure) is retained only as an unused rollback; the extended itinerary no longer loads it. The table and notes above for `ship` describe that retained rollback source.
 
