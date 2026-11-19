@@ -1,8 +1,11 @@
 /** Authored head tracks for a recorded feed. Bounds are normalized, top-left origin. */
 export interface TrackKeyframe { t: number; x: number; y: number; w: number; h: number; visible: boolean }
-export interface TrackingTrack { id: string; role?: string; keyframes: TrackKeyframe[] }
+/** Authored subject class; it only selects a neutral marker shape, never an inference. */
+export type EntityKind = "person" | "vehicle" | "watercraft" | "aircraft";
+const ENTITY_KINDS: readonly string[] = ["person", "vehicle", "watercraft", "aircraft"];
+export interface TrackingTrack { id: string; role?: string; entityKind?: EntityKind; keyframes: TrackKeyframe[] }
 export interface RecordedTracking { duration: number; tracks: TrackingTrack[] }
-export interface Head { x: number; y: number; w: number; h: number }
+export interface Head { x: number; y: number; w: number; h: number; entityKind?: EntityKind }
 
 const BOUNDS_EPSILON = 1e-5;
 
@@ -13,7 +16,8 @@ export function parseRecordedTracking(value: unknown): RecordedTracking {
   }
   const ids = new Set<string>();
   for (const track of data.tracks) {
-    if (!track || typeof track.id !== "string" || ids.has(track.id) || !Array.isArray(track.keyframes) || track.keyframes.length === 0) {
+    if (!track || typeof track.id !== "string" || ids.has(track.id) || !Array.isArray(track.keyframes) || track.keyframes.length === 0
+      || (track.entityKind !== undefined && !ENTITY_KINDS.includes(track.entityKind))) {
       throw new Error("Invalid recorded track");
     }
     ids.add(track.id);
@@ -40,7 +44,8 @@ export function parseRecordedTracking(value: unknown): RecordedTracking {
 export function sampleHeads(data: RecordedTracking, time: number): Head[] {
   if (!Number.isFinite(time) || time < 0 || time > data.duration) return [];
   const heads: Head[] = [];
-  for (const { keyframes } of data.tracks) {
+  for (const { keyframes, entityKind } of data.tracks) {
+    const kind = entityKind ? { entityKind } : {};
     const first = keyframes[0]!;
     const last = keyframes[keyframes.length - 1]!;
     if (time < first.t || time > last.t) continue;
@@ -51,7 +56,7 @@ export function sampleHeads(data: RecordedTracking, time: number): Head[] {
       if (frame.t >= time) { b = frame; break; }
     }
     if (!a.visible) continue;
-    if (b.t === a.t) { heads.push({ x: a.x, y: a.y, w: a.w, h: a.h }); continue; }
+    if (b.t === a.t) { heads.push({ x: a.x, y: a.y, w: a.w, h: a.h, ...kind }); continue; }
     if (!b.visible) continue;
     const mix = (time - a.t) / (b.t - a.t);
     heads.push({
@@ -59,6 +64,7 @@ export function sampleHeads(data: RecordedTracking, time: number): Head[] {
       y: a.y + (b.y - a.y) * mix,
       w: a.w + (b.w - a.w) * mix,
       h: a.h + (b.h - a.h) * mix,
+      ...kind,
     });
   }
   return heads;
@@ -67,8 +73,46 @@ export function sampleHeads(data: RecordedTracking, time: number): Head[] {
 const RETICLE_COLOR = "#d9dcd3";
 const RETICLE_SCALE = 1.36;
 
-/** Neutral square head marker: dashed square, corner ticks and edge ticks. */
+const WATERCRAFT_COLOR = "#f0f1ec";
+const AIRCRAFT_COLOR = "#69bb77";
+
+function strokePath(ctx: CanvasRenderingContext2D, points: number[]): void {
+  ctx.beginPath();
+  ctx.moveTo(points[0]!, points[1]!);
+  for (let i = 2; i < points.length; i += 2) ctx.lineTo(points[i]!, points[i + 1]!);
+  ctx.stroke();
+}
+
+/** Neutral object markers: a white diamond (watercraft) or a modest green triangle (aircraft). */
+function drawObjectMarker(ctx: CanvasRenderingContext2D, width: number, height: number, head: Head): void {
+  const w = head.w * width;
+  const h = head.h * height;
+  const cx = (head.x + head.w / 2) * width;
+  const cy = (head.y + head.h / 2) * height;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.lineWidth = 1.6;
+  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.shadowBlur = 1;
+  ctx.shadowOffsetY = 1;
+  if (head.entityKind === "watercraft") {
+    ctx.strokeStyle = WATERCRAFT_COLOR;
+    // Bounded: the diamond never leaves the picture, whatever the box size.
+    const half = Math.min((Math.max(w, h) * RETICLE_SCALE) / 2, cx, width - cx, cy, height - cy);
+    strokePath(ctx, [0, -half, half, 0, 0, half, -half, 0, 0, -half]);
+  } else {
+    ctx.strokeStyle = AIRCRAFT_COLOR;
+    // Sized from the box, never its long edge, so a wide aircraft box stays a small triangle inside its bounds.
+    const th = Math.min(h * 0.7, w * 0.5);
+    const tw = Math.min(th * 1.15, w * 0.6);
+    strokePath(ctx, [0, -th / 2, tw / 2, th / 2, -tw / 2, th / 2, 0, -th / 2]);
+  }
+  ctx.restore();
+}
+
+/** Neutral head marker: dashed square, corner ticks and edge ticks; object kinds use their own shape. */
 export function drawNeutralReticle(ctx: CanvasRenderingContext2D, width: number, height: number, head: Head): void {
+  if (head.entityKind === "watercraft" || head.entityKind === "aircraft") { drawObjectMarker(ctx, width, height, head); return; }
   const cx = (head.x + head.w / 2) * width;
   const cy = (head.y + head.h / 2) * height;
   const side = Math.max(head.w * width, head.h * height) * RETICLE_SCALE;

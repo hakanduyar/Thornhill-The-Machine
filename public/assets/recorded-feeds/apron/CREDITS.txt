@@ -1,0 +1,52 @@
+Recorded feed apron - credits, provenance and license
+=====================================================
+
+Files in this directory
+  loop.mp4        33-second muted excerpt (H.264, 960x540, 24 fps)
+  poster.jpg      still frame derived from the excerpt
+  tracking.json   authored aircraft-marker track (1 neutral track)
+  loop.mp4 SHA-256: 5E2DD27902145F27DBFB0EC7BDC3A816A046A2F2E4A08F861A3C0C54E962C0C4
+
+Source
+  NASA Scientific Visualization Studio, "Palmdale DC-8 apron monitoring"
+  (RollOut_Taxi_7 footage):
+  https://svs.gsfc.nasa.gov/12488/
+  Media file used:
+  https://svs.gsfc.nasa.gov/vis/a010000/a012400/a012488/RollOut_Taxi_7.webm
+  Excerpt: seconds 77-110 of that file (33 seconds, forward time).
+
+Attribution
+  Video: NASA; video by Steve Parcel.
+
+License
+  Footage: NASA public-domain policy unless otherwise noted; no separate
+  restriction is indicated for the selected footage. NASA's policy page:
+  https://svs.gsfc.nasa.gov/help/
+  The footage is NOT covered by this project's MIT license and needs none.
+  The credit above is given as a courtesy and to document provenance.
+  tracking.json: original work of this project, offered under the Creative
+  Commons Attribution 4.0 International license (CC BY 4.0):
+  https://creativecommons.org/licenses/by/4.0/
+  The project's MIT license does not apply to the files in this directory;
+  the original application code remains MIT.
+
+Changes made (derivative material)
+  - Cut a 33-second forward-time segment. An earlier cut began 2 seconds
+    sooner and opened with a rapid zoom-out; those 2 seconds were removed so
+    the camera stays fixed under the marker, and the clip was re-encoded.
+  - Silent H.264 (yuv420p), 960x540 at 24 fps; audio removed.
+  - Extracted a new still frame at t=0 as the poster.
+  - tracking.json: hand-authored whole-object bounds (normalized, top-left
+    origin) sampled from the final encoded frames. The keys were resampled
+    from the earlier cut and shifted by -2 seconds to match this one. Not
+    output of live inference and not an identification of anyone or anything.
+
+Notes
+  - This is an ordinary recorded replay shown inside a fictional interface.
+    It is not a live camera. The aircraft is parked, not flying. A wide
+    stationary apron shot; slight framing drift remains. Distant ground
+    personnel are not marked (too small for reliable bounds at this
+    encoding). The clip restarts at its end and the loop point is not
+    certified seamless.
+  - This material is not affiliated with or endorsed by NASA or the
+    videographer.

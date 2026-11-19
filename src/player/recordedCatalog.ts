@@ -26,6 +26,18 @@ export const RECORDED_CATALOG: readonly RecordedCatalogEntry[] = [
   { id: "m03", anchorIndex: 7, screen: "screen_08_cafeteria", mesh: "focal_screen" },
 ];
 
+/**
+ * Two extra panes that exist only in the opt-in extended itinerary. Their stable
+ * ids are 8 (ship) and 9 (apron); the original eight screens keep 0-7. Hold times
+ * are supplied by the itinerary on its virtual clock and never stored here.
+ */
+export const RECORDED_ITINERARY_EXTRAS: readonly RecordedCatalogEntry[] = [
+  { id: "ship", anchorIndex: 8, screen: "itinerary_ship", mesh: "itinerary_ship_image" },
+  { id: "apron", anchorIndex: 9, screen: "itinerary_apron", mesh: "itinerary_apron_image" },
+];
+
+export interface RecordedExtraHold { id: string; holdStart: number; holdEnd: number }
+
 export interface ResolvedRecordedEntry extends RecordedCatalogEntry {
   holdStart: number;
   holdEnd: number;
@@ -43,14 +55,26 @@ export const TRAIL_SECONDS = 3;
 /** Hard bound on simultaneously prepared decoders: current plus nearest upcoming. */
 export const MAX_DECODERS = 2;
 
-/** Entries whose anchor exists and matches, in route order. Missing or mismatched anchors are skipped. */
-export function resolveCatalog(anchors: readonly AnchorLike[] | undefined): ResolvedRecordedEntry[] {
+const resolved = (entry: RecordedCatalogEntry, holdStart: number, holdEnd: number): ResolvedRecordedEntry => {
+  const base = `/assets/recorded-feeds/${entry.id}`;
+  return { ...entry, holdStart, holdEnd, video: `${base}/loop.mp4`, poster: `${base}/poster.jpg`, tracking: `${base}/tracking.json` };
+};
+
+/**
+ * Entries whose anchor exists and matches, in route order. Missing or mismatched anchors are skipped.
+ * `extras` (extended itinerary only) adds the ship and apron panes on the same clock as `anchors`.
+ */
+export function resolveCatalog(anchors: readonly AnchorLike[] | undefined, extras?: readonly RecordedExtraHold[]): ResolvedRecordedEntry[] {
   const out: ResolvedRecordedEntry[] = [];
   for (const entry of RECORDED_CATALOG) {
     const anchor = anchors?.[entry.anchorIndex];
     if (!anchor || anchor.screen !== entry.screen || !Number.isFinite(anchor.holdStart) || !Number.isFinite(anchor.holdEnd)) continue;
-    const base = `/assets/recorded-feeds/${entry.id}`;
-    out.push({ ...entry, holdStart: anchor.holdStart, holdEnd: anchor.holdEnd, video: `${base}/loop.mp4`, poster: `${base}/poster.jpg`, tracking: `${base}/tracking.json` });
+    out.push(resolved(entry, anchor.holdStart, anchor.holdEnd));
+  }
+  for (const entry of extras ? RECORDED_ITINERARY_EXTRAS : []) {
+    const hold = extras?.find((e) => e.id === entry.id);
+    if (!hold || !Number.isFinite(hold.holdStart) || !Number.isFinite(hold.holdEnd) || hold.holdEnd <= hold.holdStart) continue;
+    out.push(resolved(entry, hold.holdStart, hold.holdEnd));
   }
   return out.sort((a, b) => a.holdStart - b.holdStart);
 }

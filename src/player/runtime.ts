@@ -12,6 +12,7 @@ import {
 import { disposeObjectTree } from "./dispose";
 import { letterbox } from "./letterbox";
 import { createMachineFraming } from "./machineFraming";
+import { createInteractiveItinerary, ITINERARY_EXTRA_SECONDS, type InteractiveItinerary } from "./interactiveItinerary";
 import { createRecordedFeed, type RecordedFeedController } from "./recordedFeed";
 import { createSceneRig, type SceneRig } from "./sceneRig";
 import {
@@ -127,6 +128,9 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
   let recordedFeed: RecordedFeedController | null = null;
   let renderer: RendererLike | null = null;
   let manifest: SceneManifest | null = null;
+  // Opt-in virtual navigation clock (?recordedFeed=1&itinerary=extended, Machine only). Null everywhere else.
+  let itinerary: InteractiveItinerary | null = null;
+  const navDuration = () => itinerary?.duration ?? rig?.duration ?? 0;
 
   let currentTime = 0;
   let targetTime = 0;
@@ -153,6 +157,11 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
 
   const reducedMotion = win.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
   const exact = params.mode === "reference";
+  const search = new URLSearchParams(win.location.search);
+  // Explicit opt-in: first `recordedFeed` value must be "1"; never in exact reference mode or QA.
+  const recordedOptIn = search.get("recordedFeed") === "1"
+    && world === "machine" && params.mode === "interactive" && !params.qa && !reducedMotion;
+  const wantsItinerary = recordedOptIn && search.get("itinerary") === "extended";
   const inputEnabled = params.mode === "interactive" || params.qa;
   const canStepByTouch = () => !exact && manualMap.focusHolds.length > 0 && hasTouchCapability(win);
 
@@ -189,7 +198,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
       ? {
           time: currentTime,
           targetTime,
-          duration: rig.duration,
+          duration: navDuration(),
           playing,
           settled: !playing && !touchTrip && currentTime === targetTime && navigationVelocity === 0,
         }
@@ -206,7 +215,15 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
 
   const renderNow = () => {
     if (!rig || !renderer || !scene) return;
-    currentTime = rig.seek(currentTime);
+    if (itinerary) {
+      // Virtual time stays authoritative; only the authored clock is derived from it.
+      currentTime = Math.max(0, Math.min(currentTime, itinerary.duration));
+      itinerary.restore();
+      rig.seek(itinerary.toSource(currentTime));
+      itinerary.applyPose(currentTime, rig.camera);
+    } else {
+      currentTime = rig.seek(currentTime);
+    }
     recordedFeed?.update(currentTime, rig.camera);
     renderer.render(scene, rig.camera);
     needsRender = false;
@@ -238,9 +255,9 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
       }
     }
     if (playing) {
-      targetTime = clampTime(targetTime + elapsed, rig.duration);
+      targetTime = clampTime(targetTime + elapsed, navDuration());
       currentTime = targetTime;
-      if (targetTime >= rig.duration) playing = false;
+      if (targetTime >= navDuration()) playing = false;
     } else if (touchTrip) {
       // Trips follow real elapsed time, so frame rate cannot change their length.
       const position = advanceTouchTrip(touchTrip, elapsed);
@@ -283,7 +300,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
   const setTarget = (seconds: number, immediate: boolean, travel: "manual" | "endpoint" | "touch" = "manual") => {
     if (!rig) return;
     endpointTravel = travel === "endpoint" && !immediate;
-    targetTime = clampTime(seconds, rig.duration);
+    targetTime = clampTime(seconds, navDuration());
     touchTrip = travel === "touch" && !immediate && currentTime !== targetTime
       ? createTouchTrip(manualMap.toNavigation(currentTime), manualMap.toNavigation(targetTime))
       : null;
@@ -307,7 +324,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     if (playing) {
       playing = false;
     } else {
-      targetTime = currentTime >= rig.duration ? 0 : currentTime;
+      targetTime = currentTime >= navDuration() ? 0 : currentTime;
       currentTime = targetTime;
       navigationVelocity = 0;
       playing = true;
@@ -398,7 +415,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
       playing = false;
       if (command.type === "jump") {
         heldKeys.clear(); heldSeconds = 0; resetTouch();
-        setTarget(command.to === "start" ? 0 : rig.duration, exact, "endpoint");
+        setTarget(command.to === "start" ? 0 : navDuration(), exact, "endpoint");
       }
       else {
         if (!exact) { heldKeys.set(key.key, Math.sign(command.seconds)); heldSeconds = 0; }
@@ -479,7 +496,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
       const dy = pointer.clientY - y;
       const direction = swipeDirection(dx, dy);
       if (direction && canStepByTouch()) {
-        const destination = touchStop(currentTime, direction, rig.duration, manualMap.focusHolds);
+        const destination = touchStop(currentTime, direction, navDuration(), manualMap.focusHolds);
         // A repeat toward the stop already underway never queues another stop.
         if (touchTrip && destination === targetTime) return;
         playing = false;
@@ -513,6 +530,9 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     // Restores the authored mesh state before the scene's own resources are freed.
     recordedFeed?.dispose();
     recordedFeed = null;
+    // After the feed has handed the pane meshes back: removes the panes and frees their resources.
+    itinerary?.dispose();
+    itinerary = null;
     if (scene) disposeObjectTree(scene);
     scene = null;
     if (renderer) {
@@ -572,7 +592,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     manifest = validation.manifest;
     manualMap = navigationMap(manifest, exact);
     marker.dataset.stage = "scene-assets";
-    if (params.requestedTime !== null && params.requestedTime > manifest.durationSeconds) {
+    if (params.requestedTime !== null && params.requestedTime > manifest.durationSeconds + (wantsItinerary ? ITINERARY_EXTRA_SECONDS : 0)) {
       fail(
         "error",
         "Reference time outside clip",
@@ -664,17 +684,38 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
       machineFraming = createMachineFraming(rig.camera, manifest.sourceAspectRatio);
     }
 
-    // Explicit opt-in: first `recordedFeed` value must be "1"; never in exact reference mode.
-    const recordedOptIn = new URLSearchParams(win.location.search).get("recordedFeed") === "1";
-    if (recordedOptIn && world === "machine" && params.mode === "interactive" && !params.qa && !reducedMotion) {
+    if (recordedOptIn) {
+      // The extended itinerary only applies on the already-admitted eight-hold baseline; manifest, rig and admission stay untouched.
+      if (wantsItinerary && manualMap.focusHolds.length === 8 && manifest.anchors?.length === 8) {
+        const sceneRig = rig;
+        try {
+          itinerary = createInteractiveItinerary({
+            root: gltf.scene, camera: sceneRig.camera, seek: (seconds) => sceneRig.seek(seconds),
+            sourceDuration: manifest.durationSeconds, anchors: manifest.anchors,
+          });
+        } catch {
+          itinerary = null;
+        }
+      }
       try {
-        recordedFeed = createRecordedFeed(gltf.scene, doc, requestRender, manifest.anchors);
+        recordedFeed = itinerary
+          ? createRecordedFeed(gltf.scene, doc, requestRender, itinerary.anchors, itinerary.extras)
+          : createRecordedFeed(gltf.scene, doc, requestRender, manifest.anchors);
       } catch {
         recordedFeed = null; // The original scene remains usable without the pilot.
       }
+      if (itinerary) {
+        if (recordedFeed) {
+          manualMap = itinerary.navigation;
+        } else {
+          // Never leave empty panes behind: without the feed pool the base route is used.
+          itinerary.dispose();
+          itinerary = null;
+        }
+      }
     }
 
-    currentTime = targetTime = params.requestedTime ?? 0;
+    currentTime = targetTime = clampTime(params.requestedTime ?? 0, navDuration());
     attachInput();
     layout();
     if (rafId !== 0) win.cancelAnimationFrame(rafId);
