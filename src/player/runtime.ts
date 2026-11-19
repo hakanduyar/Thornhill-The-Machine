@@ -12,6 +12,7 @@ import {
 import { disposeObjectTree } from "./dispose";
 import { letterbox } from "./letterbox";
 import { createMachineFraming } from "./machineFraming";
+import { createRecordedFeed, type RecordedFeedController } from "./recordedFeed";
 import { createSceneRig, type SceneRig } from "./sceneRig";
 import {
   clampTime,
@@ -123,6 +124,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
   let scene: Object3D | null = null;
   let rig: SceneRig | null = null;
   let machineFraming: ReturnType<typeof createMachineFraming> | null = null;
+  let recordedFeed: RecordedFeedController | null = null;
   let renderer: RendererLike | null = null;
   let manifest: SceneManifest | null = null;
 
@@ -205,6 +207,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
   const renderNow = () => {
     if (!rig || !renderer || !scene) return;
     currentTime = rig.seek(currentTime);
+    recordedFeed?.update(currentTime, rig.camera);
     renderer.render(scene, rig.camera);
     needsRender = false;
     publish();
@@ -507,6 +510,9 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     rig?.dispose();
     rig = null;
     machineFraming = null;
+    // Restores the authored mesh state before the scene's own resources are freed.
+    recordedFeed?.dispose();
+    recordedFeed = null;
     if (scene) disposeObjectTree(scene);
     scene = null;
     if (renderer) {
@@ -656,6 +662,16 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     rig.camera.updateProjectionMatrix();
     if (world === "machine" && params.mode === "interactive") {
       machineFraming = createMachineFraming(rig.camera, manifest.sourceAspectRatio);
+    }
+
+    // Explicit opt-in: first `recordedFeed` value must be "1"; never in exact reference mode.
+    const recordedOptIn = new URLSearchParams(win.location.search).get("recordedFeed") === "1";
+    if (recordedOptIn && world === "machine" && params.mode === "interactive" && !params.qa && !reducedMotion) {
+      try {
+        recordedFeed = createRecordedFeed(gltf.scene, doc, requestRender);
+      } catch {
+        recordedFeed = null; // The original scene remains usable without the pilot.
+      }
     }
 
     currentTime = targetTime = params.requestedTime ?? 0;
