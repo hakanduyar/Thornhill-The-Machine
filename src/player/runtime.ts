@@ -11,8 +11,9 @@ import {
 } from "../contract/manifest";
 import { disposeObjectTree } from "./dispose";
 import { letterbox } from "./letterbox";
-import { applyMachineConnectorTreatment } from "./machineConnectorTreatment";
 import { createMachineFraming } from "./machineFraming";
+import { createMachineSynapse, type MachineSynapse } from "./machineSynapse";
+import { createMachineTreatment, type MachineTreatment } from "./machineTreatment";
 import { createInteractiveItinerary, ITINERARY_EXTRA_SECONDS, type InteractiveItinerary } from "./interactiveItinerary";
 import { createRecordedFeed, type RecordedFeedController } from "./recordedFeed";
 import { createSceneRig, type SceneRig } from "./sceneRig";
@@ -126,7 +127,8 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
   let scene: Object3D | null = null;
   let rig: SceneRig | null = null;
   let machineFraming: ReturnType<typeof createMachineFraming> | null = null;
-  let machineConnector: (() => void) | null = null;
+  let machineSynapse: MachineSynapse | null = null;
+  let machineTreatment: MachineTreatment | null = null;
   let recordedFeed: RecordedFeedController | null = null;
   let renderer: RendererLike | null = null;
   let manifest: SceneManifest | null = null;
@@ -217,15 +219,18 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
 
   const renderNow = () => {
     if (!rig || !renderer || !scene) return;
+    let authored: number;
     if (itinerary) {
       // Virtual time stays authoritative; only the authored clock is derived from it.
       currentTime = Math.max(0, Math.min(currentTime, itinerary.duration));
       itinerary.restore();
-      rig.seek(itinerary.toSource(currentTime));
+      authored = itinerary.toSource(currentTime);
+      rig.seek(authored);
       itinerary.applyPose(currentTime, rig.camera);
     } else {
-      currentTime = rig.seek(currentTime);
+      currentTime = authored = rig.seek(currentTime);
     }
+    machineTreatment?.update(authored);
     recordedFeed?.update(currentTime, rig.camera);
     renderer.render(scene, rig.camera);
     needsRender = false;
@@ -535,8 +540,11 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     // After the feed has handed the pane meshes back: removes the panes and frees their resources.
     itinerary?.dispose();
     itinerary = null;
-    machineConnector?.();
-    machineConnector = null;
+    // Treatment first (restores source materials), then the synapse (restores far/links), before the scene is freed.
+    machineTreatment?.dispose();
+    machineTreatment = null;
+    machineSynapse?.dispose();
+    machineSynapse = null;
     if (scene) disposeObjectTree(scene);
     scene = null;
     if (renderer) {
@@ -686,7 +694,8 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     rig.camera.updateProjectionMatrix();
     if (world === "machine" && params.mode === "interactive") {
       machineFraming = createMachineFraming(rig.camera, manifest.sourceAspectRatio);
-      machineConnector = applyMachineConnectorTreatment(gltf.scene);
+      machineSynapse = createMachineSynapse(gltf.scene);
+      machineTreatment = createMachineTreatment(gltf.scene, manifest.anchors ?? []);
     }
 
     if (recordedOptIn) {
