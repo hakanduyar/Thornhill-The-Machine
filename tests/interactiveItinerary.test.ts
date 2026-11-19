@@ -1,3 +1,5 @@
+import dockedTracking from "../public/assets/recorded-feeds/docked-cargo/tracking.json";
+import { CAMERA_SPACE_ANCHORS, CAMERA_SPACE_EXTRAS } from "../src/player/cameraSpaceFeeds";
 import { Group, Mesh, MeshBasicMaterial, PerspectiveCamera, Vector3 } from "three";
 import { describe, expect, it } from "vitest";
 
@@ -91,13 +93,13 @@ describe("extended itinerary virtual clock", () => {
 });
 
 describe("extended itinerary recorded pool", () => {
-  it("keeps the original ids and adds ship and apron as stable ids 8 and 9 on the virtual clock", () => {
+  it("preserves original stops and binds the docked ship through its legacy hold id", () => {
     const { itinerary } = build();
     const entries = resolveCatalog(itinerary.anchors, itinerary.extras);
-    expect(entries).toHaveLength(10); // 8 MEVA + 2 NASA, every stop has a recording
+    expect(entries).toHaveLength(10); // Every stop has a recording.
     expect(entries.map((e) => e.anchorIndex).sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     expect(entries.filter((e) => e.anchorIndex < 8).map((e) => e.id).sort()).toEqual(RECORDED_CATALOG.map((e) => e.id).sort());
-    expect(entries.find((e) => e.id === "ship")).toMatchObject({ mesh: "itinerary_ship_image", video: "/assets/recorded-feeds/ship/loop.mp4" });
+    expect(entries.find((e) => e.id === "docked-cargo")).toMatchObject({ mesh: "itinerary_ship_image", video: "/assets/recorded-feeds/docked-cargo/loop.mp4" });
     expect(entries.find((e) => e.anchorIndex === 7)!.mesh).toBe("focal_screen");
     for (let t = 0; t <= itinerary.duration; t += 0.25) expect(selectPrepared(entries, t).length).toBeLessThanOrEqual(MAX_DECODERS);
   });
@@ -111,6 +113,9 @@ describe("extended itinerary recorded pool", () => {
 describe("object markers and staged NASA tracking", () => {
   it("parses the staged files with their authored kinds and durations", () => {
     expect(parseRecordedTracking(shipTracking).duration).toBe(32);
+    expect(parseRecordedTracking(dockedTracking).duration).toBe(8);
+    expect(sampleHeads(parseRecordedTracking(dockedTracking), 4)[0]?.entityKind).toBe("watercraft");
+    expect(resolveCatalog(CAMERA_SPACE_ANCHORS, CAMERA_SPACE_EXTRAS).find(e => e.id === "docked-cargo")).toMatchObject({ anchorIndex: 8, mesh: "itinerary_ship_image" });
     expect(parseRecordedTracking(apronTracking).duration).toBe(33);
     expect(sampleHeads(parseRecordedTracking(shipTracking), 1)[0]?.entityKind).toBe("watercraft");
     expect(sampleHeads(parseRecordedTracking(apronTracking), 1)[0]?.entityKind).toBe("aircraft");
@@ -134,6 +139,10 @@ describe("object markers and staged NASA tracking", () => {
     const ship = trace({ x: 0.425, y: 0.185, w: 0.36, h: 0.56, entityKind: "watercraft" });
     expect(ship.styles).toEqual(["#f0f1ec"]);
     expect(ship.points).toHaveLength(5);
+    const docked = trace({ x: .196, y: .081, w: .681, h: .839, entityKind: "watercraft" });
+    const extent = (axis: number) => Math.max(...docked.points.map(p => p[axis]!)) - Math.min(...docked.points.map(p => p[axis]!));
+    expect(extent(0)).toBeLessThan(.681 * 960);
+    expect(extent(1)).toBeLessThan(.839 * 540);
     const aircraft = trace({ x: 0.015, y: 0.446, w: 0.815, h: 0.324, entityKind: "aircraft" });
     expect(aircraft.styles).toEqual(["#69bb77"]);
     const heightOf = Math.max(...aircraft.points.map((p) => p[1]!)) - Math.min(...aircraft.points.map((p) => p[1]!));

@@ -112,8 +112,8 @@ function drawObjectMarker(ctx: CanvasRenderingContext2D, width: number, height: 
   ctx.shadowOffsetY = 1;
   if (head.entityKind === "watercraft") {
     ctx.strokeStyle = WATERCRAFT_COLOR;
-    // Bounded: the diamond never leaves the picture, whatever the box size.
-    const half = Math.min((Math.max(w, h) * RETICLE_SCALE) / 2, cx, width - cx, cy, height - cy);
+    // Modest: sized from the smaller object dimension so every tip stays inside the true bounds, and never leaves the picture.
+    const half = Math.min(Math.min(w, h) * 0.32, cx, width - cx, cy, height - cy);
     strokePath(ctx, [0, -half, half, 0, 0, half, -half, 0, 0, -half]);
   } else {
     ctx.strokeStyle = AIRCRAFT_COLOR;
