@@ -1,0 +1,48 @@
+Recorded feed m06 - credits, provenance and license
+====================================================
+
+Files in this directory
+  loop.mp4        35-second muted excerpt (H.264, native frame rate)
+  poster.jpg      still frame derived from the excerpt
+  tracking.json   authored head-marker tracks (2 neutral tracks)
+  loop.mp4 SHA-256: BE9A010A04D614C3D36CD8D93774A578BA5E36D5BF4199CAC69E8F978EA6F8D4
+
+Source
+  MEVA (Multiview Extended Video with Activities) dataset.
+  Camera G328 (site label in filename: school), file:
+  https://mevadata-public-01.s3.amazonaws.com/drops-123-r13/2018-03-13/17/2018-03-13.17-35-00.17-40-00.school.G328.r13.avi
+  Excerpt: seconds 15-50 of that file.
+
+Attribution
+  Video: MEVA, Kitware, Inc. / IARPA.
+  Dataset site: https://mevadata.org/
+
+License
+  The source video is offered under the Creative Commons Attribution 4.0
+  International license (CC BY 4.0):
+  https://creativecommons.org/licenses/by/4.0/
+  Dataset license statement: https://mevadata.org/resources/MEVA-data-license.txt
+  In short: you may share and adapt the material, including commercially,
+  provided you give appropriate credit, link to the license and indicate if
+  changes were made. See the linked texts for the binding terms; this file is
+  a summary, not the license.
+
+Changes made (derivative material)
+  - Cut a 35-second excerpt from the original recording.
+  - Applied a fixed spatial crop to the video frame.
+  - Removed audio and re-encoded as H.264 MP4 at the native frame rate.
+  - Extracted a still frame as the poster.
+  - tracking.json is original work of this project: hand-authored normalized
+    bounds (top-left origin) for each marker, not output of live inference and
+    not an identification of any person.
+
+Notes
+  - This is an ordinary recorded replay shown inside a fictional interface.
+    It is not a live camera, and the loop point is not guaranteed to be seamless.
+  - This material is not television footage and is not affiliated with or
+    endorsed by MEVA, Kitware, IARPA or the original production.
+  - License scope: loop.mp4 and poster.jpg retain CC BY 4.0 from the source
+    material. The project-authored tracking.json is also offered under
+    CC BY 4.0 as part of this asset package. The project's MIT license does
+    not apply to the files in this directory; the original application code
+    remains MIT.
