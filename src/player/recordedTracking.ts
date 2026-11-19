@@ -70,10 +70,11 @@ export function sampleHeads(data: RecordedTracking, time: number): Head[] {
   return heads;
 }
 
-const RETICLE_COLOR = "#d9dcd3";
+const RETICLE_COLOR = "#d9dcd3"; // person head marker only
 const RETICLE_SCALE = 1.36;
 
-const WATERCRAFT_COLOR = "#f0f1ec";
+const VEHICLE_COLOR = "#e4e6e0";
+const WATERCRAFT_COLOR ="#f0f1ec";
 const AIRCRAFT_COLOR = "#69bb77";
 
 function strokePath(ctx: CanvasRenderingContext2D, points: number[]): void {
@@ -110,8 +111,24 @@ function drawObjectMarker(ctx: CanvasRenderingContext2D, width: number, height: 
   ctx.restore();
 }
 
-/** Neutral head marker: dashed square, corner ticks and edge ticks; object kinds use their own shape. */
+/** Neutral vehicle marker: a plain white-gray rectangle fitted to the authored bounds (no square scaling). */
+function drawVehicleBox(ctx: CanvasRenderingContext2D, width: number, height: number, head: Head): void {
+  ctx.save();
+  ctx.strokeStyle = VEHICLE_COLOR;
+  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.shadowBlur = 1;
+  ctx.shadowOffsetY = 1;
+  ctx.lineWidth = 1.6;
+  ctx.strokeRect(head.x * width, head.y * height, head.w * width, head.h * height);
+  ctx.restore();
+}
+
+/**
+ * Neutral subject marker. Person: neutral dashed square with corner ticks.
+ * Vehicle: plain rectangle on the authored bounds. Watercraft and aircraft use their own shapes.
+ */
 export function drawNeutralReticle(ctx: CanvasRenderingContext2D, width: number, height: number, head: Head): void {
+  if (head.entityKind === "vehicle") { drawVehicleBox(ctx, width, height, head); return; }
   if (head.entityKind === "watercraft" || head.entityKind === "aircraft") { drawObjectMarker(ctx, width, height, head); return; }
   const cx = (head.x + head.w / 2) * width;
   const cy = (head.y + head.h / 2) * height;

@@ -1,8 +1,7 @@
 /**
  * Recorded-feed catalog: which manifest anchor shows which recorded excerpt.
  * Hold windows are never stored here; they come from the public manifest anchors.
- * Anchor index 1 (screen_02_roadside_car) has no recorded media yet and keeps its
- * original still, so it is intentionally absent.
+ * Anchor index 1 (screen_02_roadside_car) shows the covered-road excerpt.
  */
 export interface AnchorLike { screen: string; holdStart: number; holdEnd: number }
 
@@ -18,6 +17,7 @@ export interface RecordedCatalogEntry {
 
 export const RECORDED_CATALOG: readonly RecordedCatalogEntry[] = [
   { id: "m05", anchorIndex: 0, screen: "screen_01_hallway", mesh: "screen_01_hallway_image" },
+  { id: "covered-road", anchorIndex: 1, screen: "screen_02_roadside_car", mesh: "screen_02_roadside_car_image" },
   { id: "m06", anchorIndex: 2, screen: "screen_03_lockers", mesh: "screen_03_lockers_image" },
   { id: "m04", anchorIndex: 3, screen: "screen_04_armed_corridor", mesh: "screen_04_armed_corridor_image" },
   { id: "m07", anchorIndex: 4, screen: "screen_05_stairwell_person", mesh: "screen_05_stairwell_person_image" },

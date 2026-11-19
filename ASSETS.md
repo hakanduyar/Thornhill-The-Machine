@@ -19,17 +19,18 @@ OpenAI image generation produced the synthetic photographic stills. Existing emb
 | Interface code and procedural visual elements | Original project implementation | MIT |
 | Referenced system fonts | Installed on the viewer's device | Not bundled |
 | External library code | Resolved through the package lockfile | Respective upstream licenses |
-| Camera-space roadside still (`camera-space/roadside-still.webp`) | Lossless crop of the synthetic atlas already embedded in the bundled GLB; see `public/assets/camera-space/CREDITS.md` | MIT, within the scope above |
-| Recorded-feed excerpts (`recorded-feeds/m01` to `m07`, opt-in only) | MEVA dataset, Kitware, Inc. / IARPA; excerpted and re-encoded | CC BY 4.0 (video, poster and project-authored tracking), not MIT |
+| Camera-space roadside still (`camera-space/roadside-still.webp`) | Lossless crop of the synthetic atlas already embedded in the bundled GLB; see `public/assets/camera-space/CREDITS.md`. Retained in the repository, no longer shown by the camera-space interface | MIT, within the scope above |
+| Recorded-feed excerpts (`recorded-feeds/m01` to `m07` and `covered-road`, opt-in only) | MEVA dataset, Kitware, Inc. / IARPA; excerpted and re-encoded | CC BY 4.0 (video, poster and project-authored tracking), not MIT |
 | Recorded-feed excerpts (`recorded-feeds/ship` and `apron`, extended itinerary only) | NASA Scientific Visualization Studio; excerpted and re-encoded | NASA public domain (video and poster), CC BY 4.0 (project-authored tracking), not MIT |
 
 ## Optional recorded-feed experiment (`?recordedFeed=1`)
 
-Seven of the eight screens can show a recorded excerpt, and only when the URL opts in. Screen 2 (`screen_02_roadside_car`) has no recorded media yet and keeps its original still. The default scene loads none of these files.
+All eight screens can show a recorded excerpt, and only when the URL opts in. The default scene loads none of these files.
 
 | Screen | Folder | Source (MEVA camera, site label from filename) | Excerpt seconds | `loop.mp4` SHA-256 |
 | --- | --- | --- | --- | --- |
 | 1 `screen_01_hallway` | `m05` | G330 (school), [2018-05-18.12-15-00.12-20-00.school.G330.r13.avi](https://mevadata-public-01.s3.amazonaws.com/drop-5-mevid/2018-05-18.12-15-00.12-20-00.school.G330.r13.avi) | 90-120 | `4743281DB4EDAF75EA81E6024BFBAE9961C2E6D739B5ABDDE1352A3B45A241A6` |
+| 2 `screen_02_roadside_car` | `covered-road` | G505 (bus), [2018-05-18.14-25-00.14-30-00.bus.G505.r13.avi](https://mevadata-public-01.s3.amazonaws.com/drop-5-mevid/2018-05-18.14-25-00.14-30-00.bus.G505.r13.avi); fixed 672x378 crop at x=1248, y=0 of the 1920x1072 frame, scaled to 960x540 at 30 fps, forward only (not a new location, not a seamless composition) | 95-115 | `A98328C58D8F66FD5C267DE7462D3C3AF3107011E064107A2FB1556E4E3DFE1D` |
 | 3 `screen_03_lockers` | `m06` | G328 (school), [2018-03-13.17-35-00.17-40-00.school.G328.r13.avi](https://mevadata-public-01.s3.amazonaws.com/drops-123-r13/2018-03-13/17/2018-03-13.17-35-00.17-40-00.school.G328.r13.avi) | 15-50 | `BE9A010A04D614C3D36CD8D93774A578BA5E36D5BF4199CAC69E8F978EA6F8D4` |
 | 4 `screen_04_armed_corridor` | `m04` | G436 (hospital), [2018-05-18.15-15-07.15-20-07.hospital.G436.r13.avi](https://mevadata-public-01.s3.amazonaws.com/drop-5-mevid/2018-05-18.15-15-07.15-20-07.hospital.G436.r13.avi) | 75-100 | `5B18F7078826CBFEC07D00C57FE83D447570D673A1C2FC1161F875909F602B87` |
 | 5 `screen_05_stairwell_person` | `m07` | G639 (school), [2018-05-16.14-25-01.14-30-01.school.G639.r13.avi](https://mevadata-public-01.s3.amazonaws.com/drop-5-mevid/2018-05-16.14-25-01.14-30-01.school.G639.r13.avi) | 10-45 | `F4EC720F3DA77F451832F799EEE31678522F3C941A2B913063849FAA135C419E` |
@@ -39,12 +40,12 @@ Seven of the eight screens can show a recorded excerpt, and only when the URL op
 
 - **Credit:** MEVA, Kitware, Inc. / IARPA.
 - **License:** [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); dataset statement at <https://mevadata.org/resources/MEVA-data-license.txt>. The full terms are at those links; this file only summarizes them.
-- **Changes:** each source was cut to the excerpt above, audio removed, re-encoded as H.264 at the native frame rate, and a poster frame extracted.
+- **Changes:** each source was cut to the excerpt above, audio removed, re-encoded as H.264 at the native frame rate, and a poster frame extracted. `covered-road` was additionally cropped and scaled as described in its row, re-encoded at 30 fps with metadata removed. Its source ETag is multipart (`b1d536ea5714a585e1593be81acbbac3-18`), not a content hash, and no full-file source SHA-256 is recorded; `poster.jpg` SHA-256 is `4FE34677DFF19437DFE4DDC39A3F0CB2874B08C48FDC9F67CF47771BD8ED48D5`.
 - **Tracking:** each `tracking.json` is project-authored marker data (neutral tracks, normalized top-left bounds), not live inference or identification. It is licensed CC BY 4.0 together with the video and poster as one asset package.
 - **License scope:** `loop.mp4` and `poster.jpg` retain CC BY 4.0 from the source material, and the project-authored `tracking.json` is also offered under CC BY 4.0 as part of that asset package. The original application code remains MIT.
 - **Limitations:** ordinary recorded replays, not live cameras. Loop seams are not guaranteed to be invisible. Not endorsed by MEVA, Kitware or IARPA.
 
-The same summary ships beside the files in each `public/assets/recorded-feeds/mXX/CREDITS.txt`.
+The same summary ships beside the files in each `public/assets/recorded-feeds/mXX/CREDITS.txt` and `covered-road/CREDITS.txt`.
 
 ## Extended itinerary NASA excerpts (`?recordedFeed=1&itinerary=extended`)
 

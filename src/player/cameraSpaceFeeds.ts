@@ -4,11 +4,11 @@ import type { AnchorLike, RecordedExtraHold } from "./recordedCatalog";
  * Ten visual stops for the CameraSpace route. Names match the public recorded
  * catalog so the existing feed controller finds each pane by screen/mesh lookup.
  * Slots 0,1,3,4,5,7,8,9 are the original eight screens in their base order;
- * slots 2 and 6 are the two extra panes. The roadside slot is a still with no recording.
+ * slots 2 and 6 are the two extra panes. Every slot now shows a recorded excerpt.
  */
 export interface CameraSpaceStop {
   slot: number;
-  /** Recorded-feed id, or "roadside" for the still. */
+  /** Recorded-feed id (the folder under recorded-feeds). */
   id: string;
   screen: string;
   mesh: string;
@@ -18,12 +18,11 @@ export interface CameraSpaceStop {
 }
 
 const posterOf = (id: string) => `/assets/recorded-feeds/${id}/poster.jpg`;
-export const ROADSIDE_STILL = "/assets/camera-space/roadside-still.webp";
 
 /** Uneven, asymmetric positions over roughly 1200 units of depth. */
 const LAYOUT: ReadonlyArray<Omit<CameraSpaceStop, "slot" | "poster" | "recorded"> & { poster?: string }> = [
   { id: "m05", screen: "screen_01_hallway", mesh: "screen_01_hallway_image", position: [-26, 10, -70] },
-  { id: "roadside", screen: "screen_02_roadside_car", mesh: "screen_02_roadside_car_image", position: [34, -12, -190], poster: ROADSIDE_STILL },
+  { id: "covered-road", screen: "screen_02_roadside_car", mesh: "screen_02_roadside_car_image", position: [34, -12, -190] },
   { id: "ship", screen: "itinerary_ship", mesh: "itinerary_ship_image", position: [-8, 26, -310] },
   { id: "m06", screen: "screen_03_lockers", mesh: "screen_03_lockers_image", position: [-50, -22, -440] },
   { id: "m04", screen: "screen_04_armed_corridor", mesh: "screen_04_armed_corridor_image", position: [18, 30, -570] },
@@ -38,7 +37,7 @@ export const CAMERA_SPACE_STOPS: readonly CameraSpaceStop[] = LAYOUT.map((stop, 
   ...stop,
   slot,
   poster: stop.poster ?? posterOf(stop.id),
-  recorded: stop.id !== "roadside",
+  recorded: true,
 }));
 
 /** Route seconds of the first hold, and the spacing between stops. */

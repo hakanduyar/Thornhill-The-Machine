@@ -94,8 +94,8 @@ describe("extended itinerary recorded pool", () => {
   it("keeps the original ids and adds ship and apron as stable ids 8 and 9 on the virtual clock", () => {
     const { itinerary } = build();
     const entries = resolveCatalog(itinerary.anchors, itinerary.extras);
-    expect(entries).toHaveLength(9); // 7 MEVA + 2 NASA; slot 2 keeps its still
-    expect(entries.map((e) => e.anchorIndex).sort((a, b) => a - b)).toEqual([0, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(entries).toHaveLength(10); // 8 MEVA + 2 NASA, every stop has a recording
+    expect(entries.map((e) => e.anchorIndex).sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     expect(entries.filter((e) => e.anchorIndex < 8).map((e) => e.id).sort()).toEqual(RECORDED_CATALOG.map((e) => e.id).sort());
     expect(entries.find((e) => e.id === "ship")).toMatchObject({ mesh: "itinerary_ship_image", video: "/assets/recorded-feeds/ship/loop.mp4" });
     expect(entries.find((e) => e.anchorIndex === 7)!.mesh).toBe("focal_screen");
@@ -103,7 +103,7 @@ describe("extended itinerary recorded pool", () => {
   });
 
   it("stays at the base seven without extras", () => {
-    expect(resolveCatalog(manifest.anchors)).toHaveLength(7);
+    expect(resolveCatalog(manifest.anchors)).toHaveLength(8);
     expect(resolveCatalog(manifest.anchors).some((e) => e.anchorIndex >= 8)).toBe(false);
   });
 });
@@ -120,13 +120,14 @@ describe("object markers and staged NASA tracking", () => {
   function trace(head: Parameters<typeof drawNeutralReticle>[3]) {
     const points: number[][] = [];
     const styles: string[] = [];
+    const rects: Array<{box:number[];color:string}> = [];
     const ctx = {
       save() {}, restore() {}, translate() {}, beginPath() {}, moveTo(x: number, y: number) { points.push([x, y]); },
       lineTo(x: number, y: number) { points.push([x, y]); }, stroke(this: { strokeStyle: string }) { styles.push(String(this.strokeStyle)); },
-      strokeRect() {}, setLineDash() {}, strokeStyle: "", lineWidth: 0, shadowColor: "", shadowBlur: 0, shadowOffsetY: 0,
+      strokeRect(this:{strokeStyle:string}, x:number,y:number,w:number,h:number) { rects.push({box:[x,y,w,h],color:this.strokeStyle}); }, setLineDash() {}, strokeStyle: "", lineWidth: 0, shadowColor: "", shadowBlur: 0, shadowOffsetY: 0,
     } as unknown as CanvasRenderingContext2D;
     drawNeutralReticle(ctx, 960, 540, head);
-    return { points, styles };
+    return { points, styles, rects };
   }
 
   it("draws a white diamond for watercraft and a modest green triangle for a wide aircraft box", () => {
@@ -139,8 +140,15 @@ describe("object markers and staged NASA tracking", () => {
     expect(heightOf).toBeLessThanOrEqual(0.324 * 540 * 0.7 + 1e-6); // inside the box, not stretched by its width
   });
 
+  it("keeps a vehicle rectangle on its authored bounds without inheriting the person palette", () => {
+    const vehicle=trace({x:.2,y:.3,w:.4,h:.1,entityKind:"vehicle"});
+    expect(vehicle.rects).toEqual([{box:[192,162,384,54],color:"#e4e6e0"}]);
+    expect(vehicle.points).toEqual([]);
+  });
+
   it("keeps the neutral square for tracks without a kind", () => {
     const person = trace({ x: 0.4, y: 0.4, w: 0.1, h: 0.1 });
     expect(person.styles).toEqual(["#d9dcd3"]);
+    expect(person.rects[0]!.box[2]).toBeCloseTo(person.rects[0]!.box[3]!, 6);
   });
 });

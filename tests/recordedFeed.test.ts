@@ -30,18 +30,18 @@ describe("recorded tracking interpolation", () => {
 describe("recorded catalog", () => {
   const anchors = manifest.anchors;
 
-  it("maps seven media to the original eight-screen order and leaves anchor 1 as the still", () => {
+  it("maps eight recordings to every original screen in order", () => {
     const entries = resolveCatalog(anchors);
-    expect(entries.map((e) => e.anchorIndex)).toEqual([0, 2, 3, 4, 5, 6, 7]);
-    expect(entries.map((e) => e.id)).toEqual(["m05", "m06", "m04", "m07", "m01", "m02", "m03"]);
-    expect(entries.find((e) => e.anchorIndex === 1)).toBeUndefined();
-    expect(entries[6]?.mesh).toBe("focal_screen");
-    expect(entries[2]?.holdStart).toBe(anchors[3]!.holdStart);
+    expect(entries.map((e) => e.anchorIndex)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    expect(entries.map((e) => e.id)).toEqual(["m05", "covered-road", "m06", "m04", "m07", "m01", "m02", "m03"]);
+    expect(entries[1]).toMatchObject({id:"covered-road",mesh:"screen_02_roadside_car_image"});
+    expect(entries[7]?.mesh).toBe("focal_screen");
+    expect(entries[3]?.holdStart).toBe(anchors[3]!.holdStart);
   });
 
   it("skips entries whose anchor is missing or names a different screen", () => {
     expect(resolveCatalog(undefined)).toEqual([]);
-    expect(resolveCatalog(anchors.slice(0, 2))).toHaveLength(1);
+    expect(resolveCatalog(anchors.slice(0, 2))).toHaveLength(2);
     const swapped = anchors.map((a, i) => (i === 2 ? { ...a, screen: "other" } : a));
     expect(resolveCatalog(swapped).map((e) => e.id)).not.toContain("m06");
   });

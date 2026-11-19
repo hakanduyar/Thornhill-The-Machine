@@ -1,0 +1,57 @@
+Recorded feed covered-road - credits, provenance and license
+============================================================
+
+Files in this directory
+  loop.mp4        20-second muted excerpt (H.264, 960x540, 30 fps)
+  poster.jpg      still frame derived from the excerpt
+  tracking.json   authored vehicle-marker track (1 neutral track)
+  loop.mp4 SHA-256: A98328C58D8F66FD5C267DE7462D3C3AF3107011E064107A2FB1556E4E3DFE1D
+  poster.jpg SHA-256: 4FE34677DFF19437DFE4DDC39A3F0CB2874B08C48FDC9F67CF47771BD8ED48D5
+
+Source
+  MEVA (Multiview Extended Video with Activities) dataset.
+  Camera G505 (bus), file:
+  https://mevadata-public-01.s3.amazonaws.com/drop-5-mevid/2018-05-18.14-25-00.14-30-00.bus.G505.r13.avi
+  Excerpt: seconds 95-115 of that file.
+  Source file: 146065788 bytes. The server reports a multipart ETag
+  (b1d536ea5714a585e1593be81acbbac3-18), which is not a content hash; no
+  full-file SHA-256 of the source is recorded here.
+
+Attribution
+  Video: MEVA, Kitware, Inc. / IARPA.
+  Dataset site: https://mevadata.org/
+
+License
+  The source video is offered under the Creative Commons Attribution 4.0
+  International license (CC BY 4.0):
+  https://creativecommons.org/licenses/by/4.0/
+  Dataset license statement: https://mevadata.org/resources/MEVA-data-license.txt
+  In short: you may share and adapt the material, including commercially,
+  provided you give appropriate credit, link to the license and indicate if
+  changes were made. See the linked texts for the binding terms; this file is
+  a summary, not the license.
+
+Changes made (derivative material)
+  - Cut a 20-second excerpt from the original recording.
+  - Cropped a fixed 672x378 region at x=1248, y=0 of the 1920x1072 frame (the
+    right 35% of the width and the top 378 rows). This is a fixed crop of the
+    same camera, not a different location, and it is not a seamless
+    composition.
+  - Scaled the crop to 960x540 with square pixels at 30 fps.
+  - Removed audio and metadata and re-encoded as H.264 MP4 (crf 24, fast preset).
+  - The clip plays forward only and loops every 20 seconds.
+  - Extracted a still frame as the poster.
+  - tracking.json is original work of this project: hand-authored normalized
+    bounds (top-left origin) for one neutral vehicle track, not output of live
+    inference and not an identification of any vehicle or person.
+
+Notes
+  - This is an ordinary recorded replay shown inside a fictional interface.
+    It is not a live camera. The loop point is not guaranteed to be seamless.
+  - This material is not television footage and is not affiliated with or
+    endorsed by MEVA, Kitware, IARPA or the original production.
+  - License scope: loop.mp4 and poster.jpg retain CC BY 4.0 from the source
+    material. The project-authored tracking.json is also offered under
+    CC BY 4.0 as part of this asset package. The project's MIT license does
+    not apply to the files in this directory; the original application code
+    remains MIT.
