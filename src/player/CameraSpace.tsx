@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   CatmullRomCurve3,
   Color,
+  DataTexture,
   EdgesGeometry,
   FogExp2,
   Group,
@@ -15,12 +16,13 @@ import {
   Object3D,
   PerspectiveCamera,
   PlaneGeometry,
+  RGBAFormat,
   Scene,
   SRGBColorSpace,
+  Texture,
   TextureLoader,
   Vector3,
   WebGLRenderer,
-  type Texture,
 } from "three";
 
 import { assetPath } from "../contract/assetPath";
@@ -288,10 +290,27 @@ export function CameraSpace() {
     const loader = new TextureLoader();
     const load = async () => {
       const loadedTextures = await Promise.all(CAMERA_SPACE_STOPS.map(async (stop) => {
-        const texture = await loader.loadAsync(assetPath(stop.poster));
-        if (disposed) { texture.dispose(); return texture; }
-        texture.colorSpace = SRGBColorSpace;
-        texture.flipY = false;
+        // One bounded retry per poster, then a neutral 1x1 fallback so a single failed poster never blocks the scene.
+        let texture: Texture | null = null;
+        for (let attempt = 0; attempt < 2 && !texture && !disposed; attempt++) {
+          if (attempt > 0) await new Promise<void>((resolve) => setTimeout(resolve, 400));
+          if (disposed) break;
+          try {
+            texture = await loader.loadAsync(assetPath(stop.poster));
+          } catch {
+            texture = null;
+          }
+        }
+        if (disposed) { texture?.dispose(); return texture ?? new Texture(); }
+        if (texture) {
+          texture.colorSpace = SRGBColorSpace;
+          texture.flipY = false;
+        } else {
+          texture = new DataTexture(new Uint8Array([8, 12, 15, 255]), 1, 1, RGBAFormat);
+          texture.colorSpace = SRGBColorSpace;
+          texture.flipY = false;
+          texture.needsUpdate = true;
+        }
         textures.push(texture);
         return texture;
       }));
