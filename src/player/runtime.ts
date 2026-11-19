@@ -668,7 +668,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     const recordedOptIn = new URLSearchParams(win.location.search).get("recordedFeed") === "1";
     if (recordedOptIn && world === "machine" && params.mode === "interactive" && !params.qa && !reducedMotion) {
       try {
-        recordedFeed = createRecordedFeed(gltf.scene, doc, requestRender);
+        recordedFeed = createRecordedFeed(gltf.scene, doc, requestRender, manifest.anchors);
       } catch {
         recordedFeed = null; // The original scene remains usable without the pilot.
       }

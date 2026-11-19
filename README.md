@@ -4,7 +4,7 @@
 
 An experimental, full-screen 3D interface inspired by *Person of Interest*. Explore a layered information world and visit 8 anchored photographic screens. The scene, camera and route are imported from a bundled GLB; the player controls time along that route.
 
-This is an unofficial fan interface, not a surveillance service or an official production asset. The eight photographs are synthetic stills, not footage from the series. An optional experiment (below) replaces one of them with a short recorded excerpt from a public research dataset.
+This is an unofficial fan interface, not a surveillance service or an official production asset. The eight photographs are synthetic stills, not footage from the series. An optional experiment (below) replaces seven of them with short recorded excerpts from a public research dataset; the second still stays as it is.
 
 ## Try the demo
 
@@ -42,11 +42,11 @@ The opening completes before interactive navigation begins. The authored route l
 
 ## Optional recorded-feed experiment
 
-Add `?recordedFeed=1` to an interactive Machine URL (for example `/machine?recordedFeed=1`) to replace only the first screen (`screen_01_hallway`) with a 30-second muted video excerpt. The video starts preparing as the route approaches that screen, plays while the screen is in view, and stops when the route moves away or the tab is hidden. Neutral square markers are drawn over the footage from authored tracking data, not live detection.
+Add `?recordedFeed=1` to an interactive Machine URL (for example `/machine?recordedFeed=1`) to replace seven of the eight screens with muted video excerpts (25 to 55 seconds each). Screen 2 (`screen_02_roadside_car`) has no recorded excerpt yet and keeps its original still. Each video starts preparing as the route approaches its screen, plays while that screen is in view, and stops when the route moves away or the tab is hidden. At most two videos are decoded at once (the current screen and the nearest upcoming one). Neutral square markers are drawn over the footage from authored tracking data, not live detection.
 
-The default page, exact `mode=reference`, and the other seven screens are unchanged. Nothing from the experiment is fetched without the parameter. If the video cannot load or autoplay is blocked, the still image stays and the scene remains usable. Under `prefers-reduced-motion` the experiment is not started.
+The default page, exact `mode=reference`, and `prefers-reduced-motion` are unchanged and show the stills. Nothing from the experiment is fetched without the parameter. If a video cannot load or autoplay is blocked, that screen keeps its still image and the others are unaffected.
 
-Limits: this is an ordinary recorded replay, not a live camera. The loop point is not guaranteed to be seamless, and only the first feed is covered; it is not a claim that all eight screens are live. Credits, source and license are in [ASSETS.md](ASSETS.md) and `public/assets/recorded-feeds/m05/CREDITS.txt`.
+Limits: these are ordinary recorded replays, not live cameras. Loop points are not guaranteed to be seamless. Seven of eight screens are covered; this is not a claim that all eight are live. Credits, source and license are in [ASSETS.md](ASSETS.md) and `public/assets/recorded-feeds/mXX/CREDITS.txt` beside each excerpt.
 
 ## Project status
 
