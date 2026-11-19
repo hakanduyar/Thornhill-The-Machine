@@ -13,6 +13,8 @@ export interface RecordedCatalogEntry {
   screen: string;
   /** Image mesh under the screen group. The last screen's mesh is the focal screen. */
   mesh: string;
+  /** Extras only: legacy hold id used by the extended itinerary (matched in addition to `id`). */
+  holdId?: string;
 }
 
 export const RECORDED_CATALOG: readonly RecordedCatalogEntry[] = [
@@ -32,7 +34,7 @@ export const RECORDED_CATALOG: readonly RecordedCatalogEntry[] = [
  * are supplied by the itinerary on its virtual clock and never stored here.
  */
 export const RECORDED_ITINERARY_EXTRAS: readonly RecordedCatalogEntry[] = [
-  { id: "ship", anchorIndex: 8, screen: "itinerary_ship", mesh: "itinerary_ship_image" },
+  { id: "docked-cargo", holdId: "ship", anchorIndex: 8, screen: "itinerary_ship", mesh: "itinerary_ship_image" },
   { id: "apron", anchorIndex: 9, screen: "itinerary_apron", mesh: "itinerary_apron_image" },
 ];
 
@@ -72,7 +74,7 @@ export function resolveCatalog(anchors: readonly AnchorLike[] | undefined, extra
     out.push(resolved(entry, anchor.holdStart, anchor.holdEnd));
   }
   for (const entry of extras ? RECORDED_ITINERARY_EXTRAS : []) {
-    const hold = extras?.find((e) => e.id === entry.id);
+    const hold = extras?.find((e) => e.id === entry.id || e.id === entry.holdId);
     if (!hold || !Number.isFinite(hold.holdStart) || !Number.isFinite(hold.holdEnd) || hold.holdEnd <= hold.holdStart) continue;
     out.push(resolved(entry, hold.holdStart, hold.holdEnd));
   }

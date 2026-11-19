@@ -21,7 +21,8 @@ OpenAI image generation produced the synthetic photographic stills. Existing emb
 | External library code | Resolved through the package lockfile | Respective upstream licenses |
 | Camera-space roadside still (`camera-space/roadside-still.webp`) | Lossless crop of the synthetic atlas already embedded in the bundled GLB; see `public/assets/camera-space/CREDITS.md`. Retained in the repository, no longer shown by the camera-space interface | MIT, within the scope above |
 | Recorded-feed excerpts (`recorded-feeds/m01` to `m04`, `m06`, `m07`, `covered-road` and `parking-walk`, opt-in only; the earlier `m05` files remain in the repository as an unused rollback) | MEVA dataset, Kitware, Inc. / IARPA; excerpted and re-encoded | CC BY 4.0 (video, poster and project-authored tracking), not MIT |
-| Recorded-feed excerpts (`recorded-feeds/ship` and `apron`, extended itinerary only) | NASA Scientific Visualization Studio; excerpted and re-encoded | NASA public domain (video and poster), CC BY 4.0 (project-authored tracking), not MIT |
+| Recorded-feed excerpt (`recorded-feeds/docked-cargo`, extended itinerary only) | Mixkit stock video; excerpted and re-encoded | Mixkit Stock Video Free License (video and poster), MIT (project-authored tracking), not MIT/CC for the footage |
+| Recorded-feed excerpt (`recorded-feeds/apron`, extended itinerary only; the earlier `ship` files remain as an unused rollback) | NASA Scientific Visualization Studio; excerpted and re-encoded | NASA public domain (video and poster), CC BY 4.0 (project-authored tracking), not MIT |
 
 ## Optional recorded-feed experiment (`?recordedFeed=1`)
 
@@ -62,4 +63,20 @@ Two further silent excerpts appear only in the extended itinerary, on two panes 
 - **Changes:** ship: cut, resized to 720x540 and pillarboxed to 960x540, re-encoded as silent H.264, poster extracted. Apron: cut to a fixed-camera segment (an earlier cut's first 2 seconds, which opened with a zoom, were removed), re-encoded as silent H.264 at 960x540 and 24 fps, new poster at t=0.
 - **Limitations:** ordinary recorded replays, not live cameras. The ship clip ends after the ship has left, and neither loop point is seamless. The apron aircraft is parked.
 
-Provenance is also in `public/assets/recorded-feeds/ship/CREDITS.txt` and `apron/CREDITS.txt`.
+The `ship` folder (NASA, Seal Beach departure) is retained only as an unused rollback; the extended itinerary no longer loads it. The table and notes above for `ship` describe that retained rollback source.
+
+### Docked cargo ship (active third-stop pane, extended itinerary only)
+
+The active ship pane id is `docked-cargo`. It is silent and fetched only with both URL parameters.
+
+| Pane | Folder | Source | Excerpt | Length | `loop.mp4` SHA-256 |
+| --- | --- | --- | --- | --- | --- |
+| ship pane | `docked-cargo` | Mixkit [Empty cargo ship waiting at the port](https://mixkit.co/free-stock-video/empty-cargo-ship-waiting-at-the-port-4209/) (1280x720, 26.32 s; media file `https://assets.mixkit.co/videos/4209/4209-720.mp4`), retrieved 2026-11-19 | seconds 12-20 | 8 s | `0B0BE771A5336114457A3886B91011D9CFDEA32BFDA6DE3BA05CB0BC1989880D` |
+
+- **Credit:** Mixkit.
+- **License of the footage:** `loop.mp4` and `poster.jpg` are under the [Mixkit Stock Video Free License](https://mixkit.co/license/modal/videoFree/) and the [Mixkit terms](https://mixkit.co/terms/) (2025-10-02). They are not MIT and not Creative Commons. The license allows download, copying, modification and distribution in commercial and noncommercial projects, subject to the terms, and excludes stock-inventory or similar services and unmodified commercial resale. These files are distributed only as part of this project, not as a standalone free asset library. See the linked pages for the full conditions.
+- **Tracking:** `tracking.json` is project-authored (one neutral static whole-vessel box, id `vessel01`, normalized top-left bounds, not live inference), offered under MIT. The application code remains MIT.
+- **Changes:** cut to seconds 12-20 with no crop, reversal, fade or stabilization; resized to 960x540, re-encoded as silent H.264 (CRF 25, fast-start); poster extracted.
+- **Limitations:** an ordinary recorded replay, not a live camera. The ship is stationary and docked (not a ferry or a departure). The restart is a plain loop point, not a pixel-perfect seamless water loop. Not endorsed by Mixkit.
+
+Provenance is also in `public/assets/recorded-feeds/docked-cargo/CREDITS.txt`, `ship/CREDITS.txt` (rollback) and `apron/CREDITS.txt`.

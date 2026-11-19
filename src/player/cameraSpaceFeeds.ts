@@ -23,7 +23,7 @@ const posterOf = (id: string) => `/assets/recorded-feeds/${id}/poster.jpg`;
 const LAYOUT: ReadonlyArray<Omit<CameraSpaceStop, "slot" | "poster" | "recorded"> & { poster?: string }> = [
   { id: "parking-walk", screen: "screen_01_hallway", mesh: "screen_01_hallway_image", position: [-26, 10, -70] },
   { id: "covered-road", screen: "screen_02_roadside_car", mesh: "screen_02_roadside_car_image", position: [34, -12, -190] },
-  { id: "ship", screen: "itinerary_ship", mesh: "itinerary_ship_image", position: [-8, 26, -310] },
+  { id: "docked-cargo", screen: "itinerary_ship", mesh: "itinerary_ship_image", position: [-8, 26, -310] },
   { id: "m06", screen: "screen_03_lockers", mesh: "screen_03_lockers_image", position: [-50, -22, -440] },
   { id: "m04", screen: "screen_04_armed_corridor", mesh: "screen_04_armed_corridor_image", position: [18, 30, -570] },
   { id: "m07", screen: "screen_05_stairwell_person", mesh: "screen_05_stairwell_person_image", position: [66, 8, -700] },
@@ -60,7 +60,7 @@ export function routeSeconds(segment: number, fraction: number): number {
 
 /** Original eight anchors, in base order, bound to visual slots 0,1,3,4,5,7,8,9. */
 export const BASE_SLOTS: readonly number[] = [0, 1, 3, 4, 5, 7, 8, 9];
-export const EXTRA_SLOTS: Readonly<Record<string, number>> = { ship: 2, apron: 6 };
+export const EXTRA_SLOTS: Readonly<Record<string, number>> = { "docked-cargo": 2, apron: 6 };
 
 const hold = (slot: number) => ({ holdStart: slotSeconds(slot), holdEnd: slotSeconds(slot) + HOLD_SECONDS });
 

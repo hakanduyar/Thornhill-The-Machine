@@ -1,0 +1,50 @@
+Recorded feed docked-cargo - credits, provenance and license
+============================================================
+
+Files in this directory
+  loop.mp4        8-second muted excerpt (H.264, 960x540)
+  poster.jpg      still frame derived from the excerpt
+  tracking.json   authored whole-vessel box (1 neutral track)
+  loop.mp4 SHA-256: 0B0BE771A5336114457A3886B91011D9CFDEA32BFDA6DE3BA05CB0BC1989880D
+
+Source
+  Mixkit, "Empty cargo ship waiting at the port" (stock video 4209):
+  https://mixkit.co/free-stock-video/empty-cargo-ship-waiting-at-the-port-4209/
+  Media file used (1280x720, 26.32 s):
+  https://assets.mixkit.co/videos/4209/4209-720.mp4
+  Excerpt: seconds 12-20 of that file (8 seconds).
+  Retrieved: 2026-11-19.
+
+Credit
+  Video: Mixkit (mixkit.co).
+
+License
+  Video and poster: Mixkit Stock Video Free License
+  https://mixkit.co/license/modal/videoFree/
+  Mixkit terms: https://mixkit.co/terms/ (version dated 2025-10-02)
+  This is NOT the MIT license and NOT a Creative Commons license. The
+  license permits downloading, copying, modifying and distributing the video
+  in commercial and noncommercial projects, subject to the Mixkit terms.
+  It excludes building a stock inventory or similar service from the
+  video, and unmodified commercial resale. The video and poster are shipped
+  here only as part of this project and are not offered as a standalone
+  free asset library. Read the linked license and terms for the full conditions.
+  tracking.json: original work of this project, offered under the MIT license.
+  The original application code remains MIT.
+
+Changes made (derivative material)
+  - Cut seconds 12-20 (8 seconds); no crop, reversal, fade or stabilization.
+  - Resized to 960x540 and re-encoded as H.264 (CRF 25), fast-start; audio
+    removed.
+  - Extracted a still frame as the poster.
+  - tracking.json: one hand-authored static box around the whole vessel
+    (normalized, top-left origin), identical at the start and end because the
+    ship does not move in frame. Not output of live inference and not an
+    identification of anyone or anything.
+
+Notes
+  - This is an ordinary recorded replay shown inside a fictional interface.
+    It is not a live camera. The clip shows a stationary docked cargo ship;
+    it is not a ferry or a departure. The loop point is a plain restart and
+    the water motion is not a pixel-perfect seamless loop.
+  - This material is not affiliated with or endorsed by Mixkit.

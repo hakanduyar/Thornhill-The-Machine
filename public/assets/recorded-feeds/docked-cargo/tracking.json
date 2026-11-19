@@ -1,0 +1,13 @@
+{
+  "duration": 8,
+  "tracks": [
+    {
+      "id": "vessel01",
+      "entityKind": "watercraft",
+      "keyframes": [
+        { "t": 0, "x": 0.196, "y": 0.081, "w": 0.681, "h": 0.839, "visible": true },
+        { "t": 8, "x": 0.196, "y": 0.081, "w": 0.681, "h": 0.839, "visible": true }
+      ]
+    }
+  ]
+}
