@@ -146,9 +146,17 @@ describe("object markers and staged NASA tracking", () => {
     expect(vehicle.points).toEqual([]);
   });
 
+  it("keeps authored person accents distinct without changing square geometry", () => {
+    for (const [tone, expected] of [["yellow", "#c6bd76"], ["red", "#b8504a"], ["redwhite", "#f1f0ea"]] as const) {
+      const result = trace({ x: .4, y: .4, w: .1, h: .08, entityKind: "person", tone });
+      expect(result.styles).toEqual([expected]);
+      expect(result.rects[0]!.box[2]).toBeCloseTo(result.rects[0]!.box[3]!, 6);
+      expect(result.rects[0]!.color).toBe(tone === "yellow" ? "#c6bd76" : "#b8504a");
+    }
+  });
   it("keeps the neutral square for tracks without a kind", () => {
     const person = trace({ x: 0.4, y: 0.4, w: 0.1, h: 0.1 });
-    expect(person.styles).toEqual(["#c6bd76"]);
+    expect(person.styles).toEqual(["#f1f0ea"]);
     expect(person.rects[0]!.box[2]).toBeCloseTo(person.rects[0]!.box[3]!, 6);
   });
 });
