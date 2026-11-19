@@ -12,6 +12,7 @@ import {
 import { disposeObjectTree } from "./dispose";
 import { letterbox } from "./letterbox";
 import { createMachineFraming } from "./machineFraming";
+import { createMachinePhotoPresentation, type MachinePhotoPresentation } from "./machinePhotoPresentation";
 import { createMachineSynapse, type MachineSynapse } from "./machineSynapse";
 import { createMachineTreatment, type MachineTreatment } from "./machineTreatment";
 import { createInteractiveItinerary, ITINERARY_EXTRA_SECONDS, type InteractiveItinerary } from "./interactiveItinerary";
@@ -129,6 +130,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
   let machineFraming: ReturnType<typeof createMachineFraming> | null = null;
   let machineSynapse: MachineSynapse | null = null;
   let machineTreatment: MachineTreatment | null = null;
+  let machinePhotoPresentation: MachinePhotoPresentation | null = null;
   let recordedFeed: RecordedFeedController | null = null;
   let renderer: RendererLike | null = null;
   let manifest: SceneManifest | null = null;
@@ -540,6 +542,9 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     // After the feed has handed the pane meshes back: removes the panes and frees their resources.
     itinerary?.dispose();
     itinerary = null;
+    // After the feed (and panes) are gone: restores photo materials and tab visibility.
+    machinePhotoPresentation?.dispose();
+    machinePhotoPresentation = null;
     // Treatment first (restores source materials), then the synapse (restores far/links), before the scene is freed.
     machineTreatment?.dispose();
     machineTreatment = null;
@@ -696,6 +701,8 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
       machineFraming = createMachineFraming(rig.camera, manifest.sourceAspectRatio);
       machineSynapse = createMachineSynapse(gltf.scene);
       machineTreatment = createMachineTreatment(gltf.scene, manifest.anchors ?? []);
+      // Before the recorded feed clones pane materials.
+      machinePhotoPresentation = createMachinePhotoPresentation(gltf.scene);
     }
 
     if (recordedOptIn) {

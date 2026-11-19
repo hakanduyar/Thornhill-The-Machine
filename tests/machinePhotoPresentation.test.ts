@@ -1,0 +1,35 @@
+import { expect, test, vi } from "vitest";
+import { Group, Mesh, MeshBasicMaterial, PlaneGeometry } from "three";
+import { createMachinePhotoPresentation } from "../src/player/machinePhotoPresentation";
+
+test("photo presentation owns shared clones and restores prior material and tab state", () => {
+  const root = new Group();
+  const source = new MeshBasicMaterial({ opacity: 0.7 });
+  source.name = "mat_field_nodes";
+  const first = new Mesh(new PlaneGeometry(), source);
+  const second = new Mesh(new PlaneGeometry(), source);
+  const tab = new Mesh(new PlaneGeometry(), new MeshBasicMaterial());
+  tab.name = "screen_02_roadside_car_tab_red";
+  const hiddenTab = tab.clone();
+  hiddenTab.name = "screen_02_roadside_car_tab_white";
+  hiddenTab.visible = false;
+  const unrelated = new Mesh(new PlaneGeometry(), new MeshBasicMaterial());
+  root.add(first, second, tab, hiddenTab, unrelated);
+  const originalOther = unrelated.material;
+  const treatment = createMachinePhotoPresentation(root);
+  expect(tab.visible).toBe(false);
+  expect(first.material).not.toBe(source);
+  expect(first.material).toBe(second.material);
+  expect(first.material.polygonOffset).toBe(true);
+  expect(first.material.opacity).toBe(0.7);
+  expect(source.polygonOffset).toBe(false);
+  expect(unrelated.material).toBe(originalOther);
+  const dispose = vi.spyOn(first.material, "dispose");
+  treatment.dispose();
+  treatment.dispose();
+  expect(first.material).toBe(source);
+  expect(second.material).toBe(source);
+  expect(tab.visible).toBe(true);
+  expect(hiddenTab.visible).toBe(false);
+  expect(dispose).toHaveBeenCalledTimes(1);
+});
