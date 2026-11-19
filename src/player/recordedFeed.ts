@@ -20,6 +20,7 @@ import {
   resolveCatalog,
   selectPrepared,
   type AnchorLike,
+  type RecordedExtraHold,
   type ResolvedRecordedEntry,
 } from "./recordedCatalog";
 import { drawNeutralReticle, parseRecordedTracking, sampleHeads, type RecordedTracking } from "./recordedTracking";
@@ -60,6 +61,7 @@ export function createRecordedFeed(
   doc: Document,
   invalidate: () => void,
   anchors: readonly AnchorLike[] | undefined,
+  extras?: readonly RecordedExtraHold[],
 ): RecordedFeedController {
   const abort = new AbortController();
   const frustum = new Frustum();
@@ -260,7 +262,7 @@ export function createRecordedFeed(
   }
 
   const slots: Slot[] = [];
-  for (const entry of resolveCatalog(anchors)) {
+  for (const entry of resolveCatalog(anchors, extras)) {
     const found = root.getObjectByName(entry.screen)?.getObjectByName(entry.mesh);
     if (!(found instanceof Mesh) || Array.isArray(found.material) || !(found.material as MeshBasicMaterial).map) continue;
     slots.push(createSlot(entry, found));

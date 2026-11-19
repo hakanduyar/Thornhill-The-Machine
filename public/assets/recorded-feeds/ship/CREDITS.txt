@@ -1,0 +1,52 @@
+Recorded feed ship - credits, provenance and license
+====================================================
+
+Files in this directory
+  loop.mp4        32-second muted excerpt (H.264, 960x540 with black side bars)
+  poster.jpg      still frame derived from the excerpt
+  tracking.json   authored vessel-marker track (1 neutral track)
+  loop.mp4 SHA-256: 32CF688646D584DBA602B66868B5C93C673D66693170C216B4220A2478C3F7A7
+
+Source
+  NASA Scientific Visualization Studio, "Seal Beach - MN Colibri departure"
+  (silent GoPro time-lapse footage, published 2021-10-21):
+  https://svs.gsfc.nasa.gov/13964/
+  Media file used:
+  https://svs.gsfc.nasa.gov/vis/a010000/a013900/a013964/Cargo_Ship_Leaving_Port_GOPRO_1_A.webmhd.webm
+  Excerpt: seconds 22-54 of that file.
+
+Attribution
+  Video: NASA's Goddard Space Flight Center.
+  Videographers: Michael McClare, Sophia Roberts, Michael P. Menzel.
+
+License
+  Footage: NASA SVS content is public domain unless otherwise noted; no
+  exception is indicated for this silent footage. NASA's policy page:
+  https://svs.gsfc.nasa.gov/help/
+  The footage is NOT covered by this project's MIT license and needs none.
+  The credit above is given as a courtesy and to document provenance.
+  tracking.json: original work of this project, offered under the Creative
+  Commons Attribution 4.0 International license (CC BY 4.0):
+  https://creativecommons.org/licenses/by/4.0/
+  The project's MIT license does not apply to the files in this directory;
+  the original application code remains MIT.
+
+Changes made (derivative material)
+  - Cut seconds 22-54 (32 seconds) from the source file.
+  - Resized to 720x540 with square pixels, then pillarboxed to 960x540 with
+    120-pixel black side bars.
+  - Re-encoded as H.264 MP4; audio removed.
+  - Extracted a still frame as the poster.
+  - tracking.json: hand-authored whole-vessel bounds (normalized, top-left
+    origin, adjusted for the side bars) measured on the final encoded frames
+    at 2-second intervals; the distant second vessel is left untracked after
+    26 seconds. Not output of live inference and not an identification of
+    anyone or anything.
+
+Notes
+  - This is an ordinary recorded replay shown inside a fictional interface.
+    It is not a live camera. The camera is fixed; the clip starts with the
+    ship docked and ends after it has left, so the loop point is not
+    seamless and shows a visible restart.
+  - This material is not affiliated with or endorsed by NASA or the
+    videographers.

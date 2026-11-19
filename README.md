@@ -46,7 +46,13 @@ Add `?recordedFeed=1` to an interactive Machine URL (for example `/machine?recor
 
 The default page, exact `mode=reference`, and `prefers-reduced-motion` are unchanged and show the stills. Nothing from the experiment is fetched without the parameter. If a video cannot load or autoplay is blocked, that screen keeps its still image and the others are unaffected.
 
-Limits: these are ordinary recorded replays, not live cameras. Loop points are not guaranteed to be seamless. Seven of eight screens are covered; this is not a claim that all eight are live. Credits, source and license are in [ASSETS.md](ASSETS.md) and `public/assets/recorded-feeds/mXX/CREDITS.txt` beside each excerpt.
+### Extended itinerary (`?recordedFeed=1&itinerary=extended`)
+
+Adding `&itinerary=extended` to the same interactive Machine URL lengthens the route by 16 seconds with two detours: a camera trip to a ship pane as the third stop and to an apron pane as the seventh. Each detour takes 8 seconds (2.5 approach, 3 hold, 2.5 return). The authored scene, manifest and camera animation are unchanged. The extra time is a separate navigation clock during which the authored camera freezes, then rejoins its exact authored pose. Wheel, keys and touch step through ten stops on that clock, and the base route is not altered.
+
+With the extended itinerary, 9 of the 10 stops can play recorded video: the seven dataset excerpts above, plus two silent public-domain NASA excerpts (a ship leaving a port and a DC-8 on an apron, 32 and 33 seconds). The second authored still stays as it is, and the base eight-stop route with `?recordedFeed=1` alone is unchanged. Tracking markers on the new panes are a white diamond (ship) and a small green triangle (aircraft), drawn from authored data, not live detection. Nothing from the NASA excerpts is fetched unless both parameters are present.
+
+Limits: these are ordinary recorded replays, not live cameras. Loop points are not guaranteed to be seamless. Seven of eight screens are covered by default, and nine of ten stops with the extended itinerary; this is not a claim that every screen is live. Credits, source and license are in [ASSETS.md](ASSETS.md) and `public/assets/recorded-feeds/<folder>/CREDITS.txt` beside each excerpt.
 
 ## Project status
 

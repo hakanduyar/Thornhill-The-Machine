@@ -1,6 +1,6 @@
 # Asset provenance and licensing
 
-The bundled GLB contains original project-authored geometry and animation produced with Unity and Blender. Its photographic panes use fictional AI-generated surveillance-style stills, with atlas and format derivatives for rendering. These are not television footage or real surveillance images. The one exception is the optional recorded-feed experiment below, whose videos are real recordings from a public research dataset. No show video, reference screenshot collection or private production prompt is bundled.
+The bundled GLB contains original project-authored geometry and animation produced with Unity and Blender. Its photographic panes use fictional AI-generated surveillance-style stills, with atlas and format derivatives for rendering. These are not television footage or real surveillance images. The one exception is the optional recorded-feed experiment below, whose videos are real recordings from a public research dataset (plus, in the extended itinerary only, two NASA excerpts). No show video, reference screenshot collection or private production prompt is bundled.
 
 ## License scope
 
@@ -20,6 +20,7 @@ OpenAI image generation produced the synthetic photographic stills. Existing emb
 | Referenced system fonts | Installed on the viewer's device | Not bundled |
 | External library code | Resolved through the package lockfile | Respective upstream licenses |
 | Recorded-feed excerpts (`recorded-feeds/m01` to `m07`, opt-in only) | MEVA dataset, Kitware, Inc. / IARPA; excerpted and re-encoded | CC BY 4.0 (video, poster and project-authored tracking), not MIT |
+| Recorded-feed excerpts (`recorded-feeds/ship` and `apron`, extended itinerary only) | NASA Scientific Visualization Studio; excerpted and re-encoded | NASA public domain (video and poster), CC BY 4.0 (project-authored tracking), not MIT |
 
 ## Optional recorded-feed experiment (`?recordedFeed=1`)
 
@@ -43,3 +44,20 @@ Seven of the eight screens can show a recorded excerpt, and only when the URL op
 - **Limitations:** ordinary recorded replays, not live cameras. Loop seams are not guaranteed to be invisible. Not endorsed by MEVA, Kitware or IARPA.
 
 The same summary ships beside the files in each `public/assets/recorded-feeds/mXX/CREDITS.txt`.
+
+## Extended itinerary NASA excerpts (`?recordedFeed=1&itinerary=extended`)
+
+Two further silent excerpts appear only in the extended itinerary, on two panes that exist only there. They come from NASA, not from the MEVA dataset, and are not licensed under CC BY 4.0 or MIT as footage. The default scene and `?recordedFeed=1` alone fetch none of these files.
+
+| Pane | Folder | Source | Excerpt | Length | `loop.mp4` SHA-256 |
+| --- | --- | --- | --- | --- | --- |
+| ship | `ship` | NASA SVS [Seal Beach - MN Colibri departure](https://svs.gsfc.nasa.gov/13964/), published 2021-10-21 | seconds 22-54 | 32 s | `32CF688646D584DBA602B66868B5C93C673D66693170C216B4220A2478C3F7A7` |
+| apron | `apron` | NASA SVS [Palmdale DC-8 apron monitoring](https://svs.gsfc.nasa.gov/12488/) | seconds 77-110 | 33 s | `5E2DD27902145F27DBFB0EC7BDC3A816A046A2F2E4A08F861A3C0C54E962C0C4` |
+
+- **Credit:** ship: NASA's Goddard Space Flight Center (videographers Michael McClare, Sophia Roberts, Michael P. Menzel). Apron: NASA; video by Steve Parcel.
+- **License of the footage:** NASA SVS publishes its content as public domain unless otherwise noted, and no exception is indicated for either excerpt ([NASA SVS policy](https://svs.gsfc.nasa.gov/help/)). The MIT license does not apply to `public/assets/recorded-feeds/ship/` or `apron/`, and no endorsement by NASA is implied.
+- **Tracking:** each `tracking.json` is project-authored (one neutral object track, normalized top-left bounds, not live inference), offered under CC BY 4.0. The application code remains MIT.
+- **Changes:** ship: cut, resized to 720x540 and pillarboxed to 960x540, re-encoded as silent H.264, poster extracted. Apron: cut to a fixed-camera segment (an earlier cut's first 2 seconds, which opened with a zoom, were removed), re-encoded as silent H.264 at 960x540 and 24 fps, new poster at t=0.
+- **Limitations:** ordinary recorded replays, not live cameras. The ship clip ends after the ship has left, and neither loop point is seamless. The apron aircraft is parked.
+
+Provenance is also in `public/assets/recorded-feeds/ship/CREDITS.txt` and `apron/CREDITS.txt`.
