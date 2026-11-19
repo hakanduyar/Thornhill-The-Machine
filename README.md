@@ -54,6 +54,12 @@ With the extended itinerary, 9 of the 10 stops can play recorded video: the seve
 
 Limits: these are ordinary recorded replays, not live cameras. Loop points are not guaranteed to be seamless. Seven of eight screens are covered by default, and nine of ten stops with the extended itinerary; this is not a claim that every screen is live. Credits, source and license are in [ASSETS.md](ASSETS.md) and `public/assets/recorded-feeds/<folder>/CREDITS.txt` beside each excerpt.
 
+## Camera space (`/camera-space`)
+
+A separate full-viewport route, independent of `/machine`. Ten camera panes sit at uneven depths along a deep corridor, among roughly two thousand instanced background planes. Scroll, swipe or use the keyboard to move along the route; there are no on-screen arrow buttons. The route uses the existing recorded-feed controller: the nine recorded panes (seven dataset excerpts plus the ship and apron excerpts) play their muted videos with neutral tracking markers and a caption drawn on the same canvas as the picture, at most two decoders at a time. The second pane is a still cropped from the bundled scene and has no recording. With reduced motion preferred, no video is created and the panes keep their still posters. Playback pauses when the tab is hidden, and everything is released when the page closes.
+
+Variant note: the background uses the ten pane images only. It has less texture variety than an earlier private study that also used a larger populated atlas, so its appearance differs from that study.
+
 ## Project status
 
 A working experimental preview, not a production or accessibility certification. The public source has received navigation updates since its initial checkpoint; it is not claimed to reproduce an archived build byte for byte. Desktop and portrait visual consistency, continuous-motion comfort and performance across devices still need broader testing. See [the roadmap](docs/ROADMAP.md).

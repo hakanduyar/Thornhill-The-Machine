@@ -18,7 +18,6 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <head><link rel="preload" href={process.env.NEXT_PUBLIC_SCENE_PRELOAD_URL} as="fetch" crossOrigin="anonymous" /></head>
       <body>{children}</body>
     </html>
   );
