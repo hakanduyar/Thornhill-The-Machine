@@ -61,10 +61,16 @@ describe("shipped source boundaries", () => {
     }
   });
 
-  it("adds no post-processing or synthetic camera construction", () => {
+  it("keeps post-processing out and synthetic cameras isolated to CameraSpace", () => {
+    const experiment = path.join(APP_ROOT, "src", "player", "CameraSpace.tsx");
+    const experimentRoute = path.join(APP_ROOT, "app", "camera-space", "page.tsx");
+    const importers: string[] = [];
     for (const file of shipped) {
       const text = readFileSync(file, "utf8");
-      expect(text, file).not.toMatch(/EffectComposer|UnrealBloom|BokehPass|new\s+PerspectiveCamera|lookAt\(/);
+      expect(text, file).not.toMatch(/EffectComposer|UnrealBloom|BokehPass/);
+      if (file !== experiment) expect(text, file).not.toMatch(/new\s+PerspectiveCamera|lookAt\(/);
+      if (/from\s+["'][^"']*\/CameraSpace["']/.test(text)) importers.push(file);
     }
+    expect(importers).toEqual([experimentRoute]);
   });
 });

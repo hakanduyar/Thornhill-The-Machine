@@ -19,6 +19,7 @@ OpenAI image generation produced the synthetic photographic stills. Existing emb
 | Interface code and procedural visual elements | Original project implementation | MIT |
 | Referenced system fonts | Installed on the viewer's device | Not bundled |
 | External library code | Resolved through the package lockfile | Respective upstream licenses |
+| Camera-space roadside still (`camera-space/roadside-still.webp`) | Lossless crop of the synthetic atlas already embedded in the bundled GLB; see `public/assets/camera-space/CREDITS.md` | MIT, within the scope above |
 | Recorded-feed excerpts (`recorded-feeds/m01` to `m07`, opt-in only) | MEVA dataset, Kitware, Inc. / IARPA; excerpted and re-encoded | CC BY 4.0 (video, poster and project-authored tracking), not MIT |
 | Recorded-feed excerpts (`recorded-feeds/ship` and `apron`, extended itinerary only) | NASA Scientific Visualization Studio; excerpted and re-encoded | NASA public domain (video and poster), CC BY 4.0 (project-authored tracking), not MIT |
 

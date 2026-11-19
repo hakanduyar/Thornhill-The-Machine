@@ -31,6 +31,14 @@ import { drawNeutralReticle, parseRecordedTracking, sampleHeads, type RecordedTr
  * screen and the nearest upcoming one). Each is prepared on the approach and
  * released once the route has moved on. A failure affects only its own screen.
  */
+export interface RecordedFeedOptions {
+  /**
+   * Optional caption drawn on the same canvas as the video pixels and markers,
+   * after them. `time` is the media time of the frame being drawn. Absent by default.
+   */
+  annotate?(context: CanvasRenderingContext2D, info: { id: string; time: number; width: number; height: number }): void;
+}
+
 export interface RecordedFeedController {
   /** Route time in seconds; camera is used for frustum visibility when given. */
   update(time: number, camera?: Camera): void;
@@ -62,6 +70,7 @@ export function createRecordedFeed(
   invalidate: () => void,
   anchors: readonly AnchorLike[] | undefined,
   extras?: readonly RecordedExtraHold[],
+  options?: RecordedFeedOptions,
 ): RecordedFeedController {
   const abort = new AbortController();
   const frustum = new Frustum();
@@ -123,6 +132,7 @@ export function createRecordedFeed(
         }
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         if (tracking) for (const head of sampleHeads(tracking, time)) drawNeutralReticle(context, canvas.width, canvas.height, head);
+        options?.annotate?.(context, { id: entry.id, time, width: canvas.width, height: canvas.height });
         hasFrame = true;
         texture.needsUpdate = true;
         if (active) mesh.material = material;

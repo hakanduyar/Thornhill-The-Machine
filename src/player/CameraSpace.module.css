@@ -1,0 +1,63 @@
+.shell {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #05090c;
+  color: #d0c897;
+  font: 11px/1.5 ui-monospace, monospace;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.header {
+  position: absolute;
+  top: max(22px, env(safe-area-inset-top));
+  left: 24px;
+  right: 24px;
+  display: flex;
+  justify-content: space-between;
+  letter-spacing: 2px;
+  pointer-events: none;
+}
+
+.footer {
+  position: absolute;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.footer span {
+  font-size: 10px;
+  color: #9aabae;
+  letter-spacing: 1px;
+}
+
+.loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #05090c;
+}
+
+@media (max-width: 500px) {
+  .header {
+    left: 14px;
+    right: 14px;
+    font-size: 10px;
+  }
+
+  .footer span {
+    font-size: 9px;
+  }
+}

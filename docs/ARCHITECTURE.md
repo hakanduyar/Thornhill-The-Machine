@@ -8,6 +8,7 @@ See [architecture decisions](decisions/README.md) for the current technology rat
 - `src/player/runtime.ts`: rendering, input, bounded manual traversal, playback and visibility lifecycle.
 - `src/player/machineSynapse.ts`: bounded procedural neural branches with owned geometry and reversible source-layer visibility.
 - `src/player/machineTreatment.ts`: cloned-material tonal treatment evaluated in authored time, independently of the optional extended navigation clock.
+- `app/camera-space/`, `src/player/CameraSpace.tsx`, `CameraSpace.module.css`, `cameraSpaceFeeds.ts`: an isolated route with its own Three.js scene. The adapter defines the ten stops, binds the original eight anchors to slots 0, 1, 3, 4, 5, 7, 8, 9 and the ship and apron extras to slots 2 and 6, and puts them on a seconds clock (hold starts at 7.5 + slot × 9.5, each hold 3 s). The route maps eased travel between stops onto that clock and hands it to `createRecordedFeed`, which keeps ownership of preparation, the two-decoder bound and release. `recordedFeed.ts` accepts an optional same-canvas caption callback; absent, behavior is unchanged.
 - `src/player/Startup.tsx`: foreground-time opening sequence and interaction barrier.
 - `public/assets/machine/`: the bundled scene and minimal public manifest.
 - `tests/`: contract, timing, route and lifecycle checks.
