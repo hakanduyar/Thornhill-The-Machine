@@ -102,7 +102,7 @@ describe("extended itinerary recorded pool", () => {
     for (let t = 0; t <= itinerary.duration; t += 0.25) expect(selectPrepared(entries, t).length).toBeLessThanOrEqual(MAX_DECODERS);
   });
 
-  it("stays at the base seven without extras", () => {
+  it("stays at the base eight without extras", () => {
     expect(resolveCatalog(manifest.anchors)).toHaveLength(8);
     expect(resolveCatalog(manifest.anchors).some((e) => e.anchorIndex >= 8)).toBe(false);
   });
@@ -148,7 +148,7 @@ describe("object markers and staged NASA tracking", () => {
 
   it("keeps the neutral square for tracks without a kind", () => {
     const person = trace({ x: 0.4, y: 0.4, w: 0.1, h: 0.1 });
-    expect(person.styles).toEqual(["#d9dcd3"]);
+    expect(person.styles).toEqual(["#c6bd76"]);
     expect(person.rects[0]!.box[2]).toBeCloseTo(person.rects[0]!.box[3]!, 6);
   });
 });
