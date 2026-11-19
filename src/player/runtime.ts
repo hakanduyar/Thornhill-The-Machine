@@ -23,6 +23,7 @@ import {
 import { advanceNavigation, navigationTarget, HOLD_DELAY_SECONDS, MAX_PENDING_SECONDS } from "./navigation";
 
 import { createHoldMap, navigationMap, focusEntry, withinFocus } from './holdMapping';
+import { advanceTouchTrip, createTouchTrip, hasTouchCapability, isTouchTap, swipeDirection, touchStop, type TouchTrip } from "./touchNavigation";
 
 export const MAX_PIXEL_RATIO = 1.5;
 const MAX_FRAME_DELTA_SECONDS = 0.1;
@@ -130,6 +131,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
   let navigationVelocity = 0;
   // Explicit endpoint travel crosses intermediate photo holds; fresh input cancels it.
   let endpointTravel = false;
+  let touchTrip: TouchTrip | null = null;
   let manualMap = createHoldMap(1, []);
   const heldKeys = new Map<string, number>();
   let heldSeconds = 0;
@@ -150,6 +152,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
   const reducedMotion = win.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
   const exact = params.mode === "reference";
   const inputEnabled = params.mode === "interactive" || params.qa;
+  const canStepByTouch = () => !exact && manualMap.focusHolds.length > 0 && hasTouchCapability(win);
 
   marker.dataset.state = "loading";
   marker.dataset.stage = "manifest";
@@ -186,7 +189,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
           targetTime,
           duration: rig.duration,
           playing,
-          settled: !playing && currentTime === targetTime && navigationVelocity === 0,
+          settled: !playing && !touchTrip && currentTime === targetTime && navigationVelocity === 0,
         }
       : null;
 
@@ -207,7 +210,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     publish();
   };
 
-  const isAnimating = () => playing || currentTime !== targetTime || navigationVelocity !== 0 || heldKeys.size > 0;
+  const isAnimating = () => playing || touchTrip !== null || currentTime !== targetTime || navigationVelocity !== 0 || heldKeys.size > 0;
 
   const schedule = () => {
     if (disposed || rafId !== 0 || doc.hidden) return;
@@ -235,6 +238,15 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
       targetTime = clampTime(targetTime + elapsed, rig.duration);
       currentTime = targetTime;
       if (targetTime >= rig.duration) playing = false;
+    } else if (touchTrip) {
+      // Trips follow real elapsed time, so frame rate cannot change their length.
+      const position = advanceTouchTrip(touchTrip, elapsed);
+      if (touchTrip.elapsed === touchTrip.duration) {
+        currentTime = targetTime;
+        touchTrip = null;
+      } else {
+        currentTime = manualMap.toClip(position);
+      }
     } else if (currentTime !== targetTime || navigationVelocity !== 0) {
       if (exact) { currentTime = targetTime; navigationVelocity = 0; }
       else {
@@ -258,10 +270,20 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
     schedule();
   };
 
-  const setTarget = (seconds: number, immediate: boolean, endpoint = false) => {
+  const stopNavigation = () => {
+    touchTrip = null;
+    endpointTravel = false;
+    targetTime = currentTime;
+    navigationVelocity = 0;
+  };
+
+  const setTarget = (seconds: number, immediate: boolean, travel: "manual" | "endpoint" | "touch" = "manual") => {
     if (!rig) return;
-    endpointTravel = endpoint && !immediate;
+    endpointTravel = travel === "endpoint" && !immediate;
     targetTime = clampTime(seconds, rig.duration);
+    touchTrip = travel === "touch" && !immediate && currentTime !== targetTime
+      ? createTouchTrip(manualMap.toNavigation(currentTime), manualMap.toNavigation(targetTime))
+      : null;
     if (immediate) { currentTime = targetTime; navigationVelocity = 0; }
     publish();
     requestRender();
@@ -270,11 +292,13 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
   const applyManualDelta = (delta: number) => {
     if (!rig) return;
     playing = false;
+    if (touchTrip) stopNavigation();
     setTarget(exact ? targetTime + delta : manualMap.toClip(navigationTarget(manualMap.toNavigation(currentTime), manualMap.toNavigation(targetTime), delta)), exact);
   };
 
   const togglePlay = () => {
     if (!rig) return;
+    if (touchTrip) stopNavigation();
     endpointTravel = false;
     heldKeys.clear(); heldSeconds = 0;
     if (playing) {
@@ -316,12 +340,14 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
   const attachInput = () => {
     listen(doc, "visibilitychange", () => {
       if (doc.hidden) {
+        const cancelledTouchTrip = touchTrip !== null;
         heldKeys.clear(); heldSeconds = 0;
         resetTouch();
-        navigationVelocity = 0; targetTime = currentTime; endpointTravel = false;
+        stopNavigation();
         if (rafId !== 0) win.cancelAnimationFrame(rafId);
         rafId = 0;
         lastFrameMs = null;
+        if (cancelledTouchTrip) publish();
       } else {
         schedule();
       }
@@ -369,7 +395,7 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
       playing = false;
       if (command.type === "jump") {
         heldKeys.clear(); heldSeconds = 0; resetTouch();
-        setTarget(command.to === "start" ? 0 : rig.duration, exact, true);
+        setTarget(command.to === "start" ? 0 : rig.duration, exact, "endpoint");
       }
       else {
         if (!exact) { heldKeys.set(key.key, Math.sign(command.seconds)); heldSeconds = 0; }
@@ -380,42 +406,98 @@ export function createPlayer(options: PlayerOptions): PlayerHandle {
       heldKeys.delete((event as KeyboardEvent).key);
       if (!heldKeys.size) {
         heldSeconds = 0;
-        if (!exact && !endpointTravel && withinFocus(currentTime, manualMap.focusHolds)) { targetTime = currentTime; navigationVelocity = 0; requestRender(); }
+        if (!exact && !endpointTravel && !touchTrip && withinFocus(currentTime, manualMap.focusHolds)) { targetTime = currentTime; navigationVelocity = 0; requestRender(); }
       }
     });
     listen(win, "blur", () => {
       heldKeys.clear(); heldSeconds = 0;
       resetTouch();
-      navigationVelocity = 0; targetTime = currentTime; endpointTravel = false;
+      stopNavigation();
       requestRender();
     });
 
-    let touchY: number | null = null;
-    let touchId: number | null = null;
-    resetTouch = () => { touchY = null; touchId = null; };
+    let drag: { id: number; y: number } | null = null;
+    let swipe: { id: number; x: number; y: number; canTap: boolean } | null = null;
+    resetTouch = () => { drag = null; swipe = null; };
     listen(host, "pointerdown", (event) => {
       const pointer = event as PointerEvent;
       if (!interactionReady || doc.hidden) { resetTouch(); return; }
       if (pointer.pointerType === "mouse") return;
-      touchY = pointer.clientY;
-      touchId = pointer.pointerId;
+      if (pointer.pointerType === "touch") {
+        swipe = null;
+        if (canStepByTouch() || touchTrip) {
+          drag = null;
+          if (!ready || pointer.isPrimary === false) return;
+          const target = pointer.target;
+          if (target instanceof Element && target.closest("a, button, input, select, textarea")) return;
+          swipe = { id: pointer.pointerId, x: pointer.clientX, y: pointer.clientY, canTap: Boolean(touchTrip) };
+          if (pointer.isTrusted) {
+            try { host.setPointerCapture(pointer.pointerId); } catch { /* capture is optional */ }
+          }
+          return;
+        }
+      }
+      drag = { id: pointer.pointerId, y: pointer.clientY };
     });
     listen(host, "pointermove", (event) => {
       const pointer = event as PointerEvent;
-      if (!rig || touchY === null || pointer.pointerId !== touchId) return;
       if (!interactionReady || doc.hidden) { resetTouch(); return; }
-      const dy = touchY - pointer.clientY;
-      touchY = pointer.clientY;
+      if (swipe && swipe.id === pointer.pointerId) {
+        if (swipe.canTap) swipe.canTap = isTouchTap(pointer.clientX - swipe.x, pointer.clientY - swipe.y);
+        return;
+      }
+      if (!rig || !drag || drag.id !== pointer.pointerId) return;
+      const dy = drag.y - pointer.clientY;
+      drag.y = pointer.clientY;
       playing = false;
       applyManualDelta((dy / (exact ? REFERENCE_PIXELS_PER_ROUTE : MANUAL_PIXELS_PER_ROUTE)) * manualMap.duration);
     });
-    const endTouch = () => {
-      if (!exact && !endpointTravel && withinFocus(currentTime, manualMap.focusHolds)) { targetTime = currentTime; navigationVelocity = 0; requestRender(); }
-      touchY = null;
-      touchId = null;
+    const cancelSwipe = () => {
+      swipe = null;
+      stopNavigation();
+      publish();
+      requestRender();
     };
-    listen(host, "pointerup", endTouch);
-    listen(host, "pointercancel", endTouch);
+    const finishDrag = (pointer: PointerEvent) => {
+      if (pointer.pointerType === "touch" && canStepByTouch() && drag?.id !== pointer.pointerId) return;
+      drag = null;
+      if (!exact && !endpointTravel && !touchTrip && withinFocus(currentTime, manualMap.focusHolds)) {
+        stopNavigation();
+        requestRender();
+      }
+    };
+    listen(host, "pointerup", (event) => {
+      const pointer = event as PointerEvent;
+      if (!swipe || swipe.id !== pointer.pointerId) { finishDrag(pointer); return; }
+      const { x, y, canTap } = swipe;
+      swipe = null;
+      if (!rig || !interactionReady || doc.hidden || (!canStepByTouch() && !touchTrip)) return;
+      const dx = pointer.clientX - x;
+      const dy = pointer.clientY - y;
+      const direction = swipeDirection(dx, dy);
+      if (direction && canStepByTouch()) {
+        const destination = touchStop(currentTime, direction, rig.duration, manualMap.focusHolds);
+        // A repeat toward the stop already underway never queues another stop.
+        if (touchTrip && destination === targetTime) return;
+        playing = false;
+        heldKeys.clear(); heldSeconds = 0;
+        stopNavigation();
+        setTarget(destination, reducedMotion, "touch");
+      } else if (touchTrip && canTap && isTouchTap(dx, dy)) {
+        stopNavigation();
+        publish();
+        requestRender();
+      }
+    });
+    listen(host, "pointercancel", (event) => {
+      const pointer = event as PointerEvent;
+      if (swipe && swipe.id === pointer.pointerId) { cancelSwipe(); return; }
+      finishDrag(pointer);
+    });
+    // Capture is also released after a normal pointerup; by then swipe is already null, so only an interrupted gesture cancels.
+    listen(host, "lostpointercapture", (event) => {
+      if (swipe?.id === (event as PointerEvent).pointerId) cancelSwipe();
+    });
   };
 
   function teardownScene() {

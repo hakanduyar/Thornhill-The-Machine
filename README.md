@@ -32,7 +32,8 @@ pnpm start
 
 ## Controls
 
-- Wheel or touch drag: move forward/backward along the authored route.
+- Wheel: continuous forward/backward movement along the authored route.
+- Touch: one vertical swipe moves one focus stop forward (swipe up) or back (swipe down), in portrait and landscape. Tapping during the trip cancels it. In `mode=reference` (exact mode), touch drag moves along the route as before.
 - Arrow/Page keys: navigate; Space or K: toggle playback.
 - Home/End: navigate to the route boundaries.
 - `/machine?mode=reference&t=10&qa=1`: exact authored-time inspection with diagnostic controls.
