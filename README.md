@@ -4,7 +4,7 @@
 
 An experimental, full-screen 3D interface inspired by *Person of Interest*. Explore a layered information world and visit 8 anchored photographic screens. The scene, camera and route are imported from a bundled GLB; the player controls time along that route.
 
-This is an unofficial fan interface, not a surveillance service or an official production asset. The eight photographs are synthetic stills, not footage from the series. An optional experiment (below) replaces seven of them with short recorded excerpts from a public research dataset; the second still stays as it is.
+This is an unofficial fan interface, not a surveillance service or an official production asset. The eight photographs are synthetic stills, not footage from the series. An optional experiment (below) replaces all eight with short recorded excerpts from a public research dataset, including a covered-road recording on the second screen. The default route retains the synthetic stills.
 
 ## Try the demo
 
@@ -42,7 +42,7 @@ The opening completes before interactive navigation begins. The authored route l
 
 ## Optional recorded-feed experiment
 
-Add `?recordedFeed=1` to an interactive Machine URL (for example `/machine?recordedFeed=1`) to replace all eight screens with muted video excerpts (20 to 55 seconds each). Screen 1 shows a 42-second fixed crop of one MEVA school-camera recording of a parking area; it starts and ends with an empty scene, so it cycles naturally (other loop points are still not guaranteed to be seamless). Screen 2 (`screen_02_roadside_car`) shows a 20-second fixed crop of one MEVA bus-camera recording; the original synthetic still stays in the repository but is not used for that screen. Each video starts preparing as the route approaches its screen, plays while that screen is in view, and stops when the route moves away or the tab is hidden. At most two videos are decoded at once (the current screen and the nearest upcoming one). Muted-yellow square markers surround people; a neutral white-gray rectangle follows the vehicle bounds. These annotations use authored tracking data, not live detection.
+Add `?recordedFeed=1` to an interactive Machine URL (for example `/machine?recordedFeed=1`) to replace all eight screens with muted video excerpts (20 to 55 seconds each). Screen 1 shows a 42-second fixed crop of one MEVA school-camera recording of a parking area; it starts and ends with an empty scene, so it cycles naturally (other loop points are still not guaranteed to be seamless). Screen 2 (`screen_02_roadside_car`) shows a 20-second fixed crop of one MEVA bus-camera recording; the original synthetic still stays in the repository but is not used for that screen. Each video starts preparing as the route approaches its screen, plays while that screen is in view, and stops when the route moves away or the tab is hidden. At most two videos are decoded at once (the current screen and the nearest upcoming one). Off-white square markers surround people, with a small authored subset using muted yellow, red or red-white accents; a neutral white-gray rectangle follows the vehicle bounds. The colors are display variations, not classifications of the people shown. These annotations use authored tracking data, not live detection.
 
 The default page, exact `mode=reference`, and `prefers-reduced-motion` are unchanged and show the stills. Nothing from the experiment is fetched without the parameter. If a video cannot load or autoplay is blocked, that screen keeps its still image and the others are unaffected.
 
